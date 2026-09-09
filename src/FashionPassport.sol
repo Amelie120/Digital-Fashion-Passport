@@ -1,16 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+
 //FashionPassport contract stores a clothing  item
 //anyone can register an itme and the ownership transfers on resale, building a verifiable on-chain ownership histroy
-contract FashionPassport {
+contract FashionPassport is ERC721 {
     //creating a struct to basically keep track of the items details
     //so brand,model, registrar, owner, createdAt and the metadataURI
     struct Passport {
         string brand;
         string model;
         address registrar;
-        address owner;
         uint256 createdAt;
         string metadataURI;
     }
@@ -30,11 +31,8 @@ contract FashionPassport {
         string model
     );
 
-    event PassportTransferred(
-        uint256 indexed id,
-        address indexed from,
-        address indexed to
-    );
+    //adding a constructore to run once at deployement so that it passes the collection name + ticker to the erc721
+    constructor() ERC721("Fashion Passport", "FASH") {}
 
     //making a function to register a new clothing item and then we return the passport id
     function createPassport(
@@ -52,10 +50,13 @@ contract FashionPassport {
 
         p.brand = _brand;
         p.model = _model;
-        p.owner = msg.sender;
         p.registrar = msg.sender;
         p.createdAt = block.timestamp;
         p.metadataURI = _metadataURI;
+
+        //the NFT replaces the p.owner set to the msg.sender so
+        //openzepellin has their own table and emits the transfer so we use safe to check
+        _safeMint(msg.sender, id);
 
         emit PassportCreated(id, msg.sender, _brand, _model);
 
@@ -73,21 +74,12 @@ contract FashionPassport {
         return passports[_id];
     }
 
-    //need a function for transferring the passport to the new owner
-    //so fox example when the item is resold
-    function transferPassport(uint256 _id, address _to) public {
-        Passport storage p = passports[_id];
-
-        //checking that its valid first
-        require(p.createdAt != 0, "This passport does not exist");
-        require(p.owner == msg.sender, "Not the owner");
-        require(_to != address(0), "Cannot transfer to this zero address");
-
-        //setting the address so the event can report it
-        address from = p.owner;
-
-        p.owner = _to;
-
-        emit PassportTransferred(_id, from, _to);
+    //creating a function so that metamask and opensea call to tfind the image
+    function tokenURI(
+        uint256 _id
+    ) public view override returns (string memory) {
+        //reverting if the owner doesnt exist calling the already existing function
+        _requireOwned(_id);
+        return passports[_id].metadataURI;
     }
 }

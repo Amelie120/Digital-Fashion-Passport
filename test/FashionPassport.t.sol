@@ -49,7 +49,7 @@ contract FashionPassportTest is Test {
         //fetching it
         FashionPassport.Passport memory p = passport.getPassport(id);
 
-        assertEq(p.owner, alice);
+        assertEq(passport.ownerOf(id), alice);
         assertEq(p.registrar, alice);
     }
 
@@ -86,11 +86,11 @@ contract FashionPassportTest is Test {
 
         //transferring the item to bob and checking
         vm.prank(alice);
-        passport.transferPassport(id, bob);
+        passport.transferFrom(alice, bob, id);
 
         FashionPassport.Passport memory p = passport.getPassport(id);
 
-        assertEq(p.owner, bob);
+        assertEq(passport.ownerOf(id), bob);
         assertEq(p.registrar, alice);
     }
 
@@ -99,13 +99,13 @@ contract FashionPassportTest is Test {
         vm.prank(alice);
 
         uint256 id = passport.createPassport(
-            "Guci",
+            "Gucci",
             "Horsebit Loafers",
             "ipfs://abc"
         );
 
         vm.prank(bob);
-        vm.expectRevert("Not the owner");
-        passport.transferPassport(id, bob);
+        vm.expectRevert();
+        passport.transferFrom(alice, bob, id);
     }
 }
