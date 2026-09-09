@@ -35,11 +35,10 @@ contract FashionPassport is ERC721 {
     constructor() ERC721("Fashion Passport", "FASH") {}
 
     //making a function to register a new clothing item and then we return the passport id
-    function createPassport(
-        string memory _brand,
-        string memory _model,
-        string memory _metadataURI
-    ) public returns (uint256) {
+    function createPassport(string memory _brand, string memory _model, string memory _metadataURI)
+        public
+        returns (uint256)
+    {
         //adding 1 first so the first passport is 1 then getting the value
         //so the first id is never 0
         uint256 id = ++nextPassportId;
@@ -75,9 +74,7 @@ contract FashionPassport is ERC721 {
     }
 
     //creating a function so that metamask and opensea call to tfind the image
-    function tokenURI(
-        uint256 _id
-    ) public view override returns (string memory) {
+    function tokenURI(uint256 _id) public view override returns (string memory) {
         //reverting if the owner doesnt exist calling the already existing function
         _requireOwned(_id);
         return passports[_id].metadataURI;

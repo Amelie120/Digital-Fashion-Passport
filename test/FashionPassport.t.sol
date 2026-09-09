@@ -22,11 +22,7 @@ contract FashionPassportTest is Test {
     function test_CreatePassport_StoresData() public {
         vm.prank(alice);
         //alice creating and adding info to her new passport
-        uint256 id = passport.createPassport(
-            "Gucci",
-            "Horsebit Loafers",
-            "ipfs://abc"
-        );
+        uint256 id = passport.createPassport("Gucci", "Horsebit Loafers", "ipfs://abc");
 
         //getting the id of the new passport
         //using memory to access a copy
@@ -40,11 +36,7 @@ contract FashionPassportTest is Test {
     //creating a test to check the setting of the owner and registrar
     function test_CreatePassport_SetsOwnerAndRegistrar() public {
         vm.prank(alice);
-        uint256 id = passport.createPassport(
-            "Gucci",
-            "Horsebit Loafers",
-            "ipfs://abc"
-        );
+        uint256 id = passport.createPassport("Gucci", "Horsebit Loafers", "ipfs://abc");
 
         //fetching it
         FashionPassport.Passport memory p = passport.getPassport(id);
@@ -56,18 +48,10 @@ contract FashionPassportTest is Test {
     //creating a function to check that the id are auto-increment
     function test_IdsStartAtOneAandIncrement() public {
         vm.prank(alice);
-        uint256 firstId = passport.createPassport(
-            "Gucci",
-            "Horsebit Loafers",
-            "ipfs://abc"
-        );
+        uint256 firstId = passport.createPassport("Gucci", "Horsebit Loafers", "ipfs://abc");
 
         vm.prank(bob);
-        uint256 secondId = passport.createPassport(
-            "Nike",
-            "Air Max 90",
-            "ipfs;//def"
-        );
+        uint256 secondId = passport.createPassport("Nike", "Air Max 90", "ipfs;//def");
 
         assertEq(firstId, 1);
         assertEq(secondId, 2);
@@ -78,11 +62,7 @@ contract FashionPassportTest is Test {
         //alice registers the item
         vm.prank(alice);
 
-        uint256 id = passport.createPassport(
-            "Gucci",
-            "Horsebit Loafers",
-            "ipfs://abc"
-        );
+        uint256 id = passport.createPassport("Gucci", "Horsebit Loafers", "ipfs://abc");
 
         //transferring the item to bob and checking
         vm.prank(alice);
@@ -98,11 +78,7 @@ contract FashionPassportTest is Test {
     function test_RevertWhen_NotOnwerTransfers() public {
         vm.prank(alice);
 
-        uint256 id = passport.createPassport(
-            "Gucci",
-            "Horsebit Loafers",
-            "ipfs://abc"
-        );
+        uint256 id = passport.createPassport("Gucci", "Horsebit Loafers", "ipfs://abc");
 
         vm.prank(bob);
         vm.expectRevert();
