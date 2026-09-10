@@ -48,9 +48,9 @@
             
             //waiting till the person actually approves
             const address = await signer.getAddress();
-            document.getElementsById("status").textContent = "Connected: "  + address;
+            document.getElementById("status").textContent = "Connected: "  + address;
         }
-        
+
             //running the connect() when the button is clicked
             document.getElementById("connectBtn").addEventListener("click", connect);
 
