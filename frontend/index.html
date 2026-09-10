@@ -5,10 +5,40 @@
     <title>Digital Fashion Passport</title>
 
     <!-- connecting the ether.js from CDN so it can interact-->
-     <script src=""https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js></script>
+     <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
 </head>
-</html>
+
 <body>
     <h1> Digital Fashion Passport</h1>
-    <button></button>
+    <button id="connectBtn">Connect Wallet</button>
+    <p id="status">Not connected</p>
+    <button id="viewBtn">View Passport List</button>
+    <button id="transferBtn">Transfer</button>
+    <script>
+        //adding the sepolia address and the ABI
+        const ADDRESS = "0x67ad5c6b250f08b1cfd749cc371cdd140d81a61f"
+
+        const ABI = [
+            "function createPassport(string,string,string) returns (uint256)",
+            "function getPassport(uint256) view returns (tuple(string,string,address,uint256,string))",
+            "function ownerOf(uint256) view returns (address)",
+            "function nextPassportId() view returns (uint256)",
+            "function transferFrom(address,addres,uint256)"
+        ];
+        //when the user connects we fill these in 
+        let provider;
+        let signer;
+        let contract;
+
+        //connecting to MetaMask
+        async function connect(){
+            if (!window.etherum) {
+                document.getElementById("status").textContent = "MetaMask not found";
+                return;
+            }
+
+            
+        }
+    </script>
 </body>
+</html>
