@@ -23,7 +23,7 @@
             "function getPassport(uint256) view returns (tuple(string,string,address,uint256,string))",
             "function ownerOf(uint256) view returns (address)",
             "function nextPassportId() view returns (uint256)",
-            "function transferFrom(address,addres,uint256)"
+            "function transferFrom(address,address,uint256)"
         ];
         //when the user connects we fill these in 
         let provider;
@@ -32,13 +32,29 @@
 
         //connecting to MetaMask
         async function connect(){
-            if (!window.etherum) {
+            if (!window.ethereum) {
                 document.getElementById("status").textContent = "MetaMask not found";
                 return;
             }
 
+            //the connection 
+            provider = new ethers.BrowserProvider(window.ethereum);
+
+            //asking the user to approve
+            signer = await provider.getSigner();
+
+            //passing the contract, as a javascript object
+            contract = new ethers.Contract(ADDRESS, ABI, signer);
             
+            //waiting till the person actually approves
+            const address = await signer.getAddress();
+            document.getElementsById("status").textContent = "Connected: "  + address;
         }
+        
+            //running the connect() when the button is clicked
+            document.getElementById("connectBtn").addEventListener("click", connect);
+
+        
     </script>
 </body>
 </html>
