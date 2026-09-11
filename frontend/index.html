@@ -656,7 +656,11 @@ $("mintBtn").addEventListener("click", async () => {
         $("stamp").classList.add("on");
         btn.textContent = "Locked 🔒";
 
-        addVisa(id, $("fEmoji").value, brand, item);
+        //rebuild the whole grid from the chain rather than optimistically pasting
+        //a card on. if two mints are queued at once, or a transaction quietly
+        //fails, an optimistic card would leave the grid showing something that
+        //isnt true. reading it back means what you see is always what is on-chain.
+        await loadPassports();
 
         //let her see the stamp land, then shut the passport
         await wait(1100);
