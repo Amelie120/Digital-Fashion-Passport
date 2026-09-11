@@ -268,6 +268,92 @@ footer a{color:var(--hot)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s !important; transition-duration:.15s !important}
 }
+/* ── transfer flow ───────────────────────────────── */
+/* the three screens that can occupy the right hand page */
+.entry,.detail,.tf{display:flex; flex-direction:column; flex:1}
+.entry[hidden],.detail[hidden],.tf[hidden]{display:none}
+
+/* read-only rows on an existing passport */
+.row{display:grid; gap:2px; margin-bottom:12px}
+.row .k{
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:#B0708C;
+}
+.row .v{font-size:15px; font-weight:500; word-break:break-all}
+.row .v.mono{font-family:"IBM Plex Mono",monospace; font-size:12px}
+
+.pagebtn{
+  width:100%; border:2px solid #3D0A26; font-family:Karla,sans-serif; font-weight:700;
+  font-size:13px; padding:9px; border-radius:999px; cursor:pointer;
+  box-shadow:3px 3px 0 #3D0A26; transition:transform .15s, box-shadow .15s;
+}
+.pagebtn:hover{transform:translate(-2px,-2px); box-shadow:5px 5px 0 #3D0A26}
+.pagebtn.go{background:#FF2E88; color:#fff; margin-top:auto}
+.pagebtn.danger{background:#C62828; color:#fff; margin-top:8px}
+.pagebtn.quiet{background:transparent; color:#3D0A26; box-shadow:none; border-width:1.5px; margin-top:8px}
+.pagebtn.quiet:hover{transform:none; box-shadow:none; background:#FDEDF3}
+.pagebtn[disabled]{opacity:.6; cursor:wait; transform:none}
+
+.tf label{
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:#B0708C; display:block; margin-bottom:3px;
+}
+.tf input{
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:#3D0A26; width:100%;
+  border:0; border-bottom:1.5px dotted #E3B9CD; background:transparent; padding:5px 0;
+}
+.tf input:focus{outline:0; border-bottom-color:var(--hot)}
+.tf input::placeholder{color:#D9AFC3}
+.warn{
+  border-left:3px solid #C62828; background:#FDECEC;
+  padding:9px 11px; margin:14px 0; font-size:12.5px; line-height:1.45; color:#7A1B1B;
+}
+.warn b{font-weight:700}
+.tferr{font-size:12px; color:#C62828; margin:8px 0 0; min-height:1px}
+
+/* the confirm step is deliberately its own screen, not a checkbox */
+.confirm{
+  position:absolute; inset:0; z-index:5; background:var(--paper); color:#3D0A26;
+  display:none; flex-direction:column; padding:24px 22px; border-radius:6px 14px 14px 6px;
+}
+.confirm.on{display:flex}
+.confirm .to{
+  font-family:"IBM Plex Mono",monospace; font-size:13px; line-height:1.7; color:#3D0A26;
+  background:#FDECEC; border:1.5px solid #F3C4C4; border-radius:6px;
+  padding:12px; margin:12px 0; word-break:break-all;
+}
+.confirm .piece{font-family:"Bodoni Moda",serif; font-size:19px; font-weight:700; margin-top:4px}
+
+/* the red TRANSFERRED stamp. separate from the pink ON-CHAIN one */
+.xstamp{
+  position:absolute; right:16px; bottom:86px; z-index:6;
+  border:3px solid #C62828; color:#C62828; border-radius:8px; padding:6px 10px;
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.12em; text-align:center;
+  transform:rotate(-14deg) scale(2.4); opacity:0; pointer-events:none;
+}
+.xstamp.on{animation:thud .5s cubic-bezier(.3,1.6,.5,1) forwards}
+.xstamp b{display:block; font-size:13px; letter-spacing:.06em}
+@keyframes thud{to{transform:rotate(-14deg) scale(1); opacity:.92}}
+
+/* the leaf that sweeps across when you turn to another item */
+.leaf{
+  position:absolute; inset:0; z-index:3; border-radius:6px 14px 14px 6px;
+  background:linear-gradient(90deg,#F6E2EB,var(--paper) 22%);
+  transform-origin:left center; transform:rotateY(0deg); opacity:0;
+  pointer-events:none; box-shadow:0 20px 40px rgba(122,9,47,.2);
+}
+.leaf.turn{animation:turnpage .78s cubic-bezier(.55,.05,.3,1) forwards}
+@keyframes turnpage{
+  0%{opacity:1; transform:rotateY(0deg)}
+  99%{opacity:1; transform:rotateY(-172deg)}
+  100%{opacity:0; transform:rotateY(-172deg)}
+}
+
+/* stamp cards are buttons now, so they need resetting and a focus ring */
+.visa{cursor:pointer; text-align:left; color:inherit; font:inherit; width:100%}
+.visa:focus-visible{outline:3px solid var(--rose-deep); outline-offset:3px}
+.visa.active{border-color:var(--hot); border-width:2px}
+
 /* ── the "what is a wallet?" explainer ───────────── */
 .scrim{
   position:fixed; inset:0; z-index:50; display:grid; place-items:center;
@@ -317,8 +403,10 @@ footer a{color:var(--hot)}
 
       <!-- the right hand page. it sits under the cover so its revealed when it opens -->
       <div class="face page-right">
-        <div class="ph"><span class="t">Entry</span><span class="n" id="tokenNo">TOKEN #—</span></div>
+        <div class="ph"><span class="t" id="pTitle">Entry</span><span class="n" id="tokenNo">TOKEN #—</span></div>
 
+        <!-- SCREEN 1: the form for registering a new piece -->
+        <div class="entry" id="entry">
         <div class="field">
           <label for="fBrand">Brand</label>
           <input id="fBrand" placeholder="Who made it?">
@@ -353,9 +441,49 @@ footer a{color:var(--hot)}
 
         <button class="mint-btn" id="mintBtn">Save &amp; lock 🔒</button>
         <p class="err" id="err" hidden></p>
+        </div><!-- /entry -->
+
+        <!-- SCREEN 2: read-only details of a passport you already own -->
+        <div class="detail" id="detail" hidden>
+          <div class="row"><span class="k">Brand</span><span class="v" id="dBrand">—</span></div>
+          <div class="row"><span class="k">Item</span><span class="v" id="dItem">—</span></div>
+          <div class="row"><span class="k">Added</span><span class="v" id="dDate">—</span></div>
+          <div class="row"><span class="k">Registered by</span><span class="v mono" id="dReg">—</span></div>
+          <div class="row"><span class="k">Holder</span><span class="v mono" id="dOwner">—</span></div>
+          <div class="row"><span class="k">Proof</span><span class="v mono" id="dUri">—</span></div>
+          <button class="pagebtn go" id="startBtn">Transfer this piece →</button>
+        </div>
+
+        <!-- SCREEN 3: who are we sending it to -->
+        <div class="tf" id="tf" hidden>
+          <label for="toAddr">Send to wallet address</label>
+          <input id="toAddr" placeholder="0x…" spellcheck="false">
+          <div class="warn">
+            <b>This cannot be undone.</b> Once sent, the passport belongs to that
+            address. A wrong address loses the piece forever.
+          </div>
+          <p class="tferr" id="tferr"></p>
+          <button class="pagebtn danger" id="reviewBtn">Review transfer</button>
+          <button class="pagebtn quiet" id="backBtn">Cancel</button>
+        </div>
 
         <div class="stamp" id="stamp"><b>ON-CHAIN</b><span id="stampDate">SEPOLIA</span></div>
+        <div class="xstamp" id="xstamp"><b>TRANSFERRED</b><span id="xstampTo">SEPOLIA</span></div>
       </div>
+
+      <!-- SCREEN 4: the confirm step, deliberately its own screen so the full
+           address is read before anything irreversible happens -->
+      <div class="confirm" id="confirm">
+        <div class="ph"><span class="t">Confirm</span><span class="n">FINAL</span></div>
+        <p style="margin:0; font-size:13px; color:#8A5C72">You are about to hand over</p>
+        <div class="piece" id="cPiece">—</div>
+        <p style="margin:14px 0 0; font-size:13px; color:#8A5C72">to this address</p>
+        <div class="to" id="cAddr">0x…</div>
+        <button class="pagebtn danger" id="confirmBtn" style="margin-top:auto">Yes, transfer it 🔑</button>
+        <button class="pagebtn quiet" id="cancelBtn">Go back</button>
+      </div>
+
+      <div class="leaf" id="leaf"></div>
 
       <!-- the cover, and its back face which is the photo page -->
       <div class="cover-wrap" id="coverWrap">
@@ -568,6 +696,11 @@ $("connectBtn").addEventListener("click", connect);
 const book = $("book");
 
 function openBook(){
+    //tapping the cover or the + always means "register something new", so put the
+    //right hand page back to the blank entry form rather than whatever passport
+    //was last being viewed
+    current = null;
+    showEntry();
     book.classList.add("open");
     setTimeout(() => $("fBrand").focus(), 900);
 }
@@ -650,6 +783,9 @@ $("mintBtn").addEventListener("click", async () => {
 
         //digging the token id out of the Transfer event the contract emitted
         const id = tokenIdFrom(receipt);
+
+        //remember the category she picked for this token, in this browser
+        if (id !== null) rememberCat(id, $("fEmoji").value);
 
         $("tokenNo").textContent = "TOKEN #" + pad(id);
         $("stampDate").textContent = "SEPOLIA · #" + pad(id);
@@ -758,9 +894,16 @@ async function loadPassports(){
     //drop the nulls, newest first
     const mine = results.filter(Boolean).reverse();
 
+    //keep them so tapping a stamp can show the details without going back to the chain
+    myPassports = mine;
+
     for (const p of mine) {
-        addVisa(p.id, "👜", p.brand, p.item, p.createdAt);
+        addVisa(p);
     }
+
+    //if the passport we were looking at has just left the wallet it wont be in
+    //this list any more. keep it on screen so the TRANSFERRED stamp is readable.
+    if (current && !mine.some(p => p.id === current.id)) markCurrentGone();
 
     $("empty").hidden = mine.length > 0;
     if (mine.length === 0) $("empty").textContent = "Nothing in here yet — tap the passport to add your first piece.";
@@ -768,25 +911,253 @@ async function loadPassports(){
 
 $("viewBtn").addEventListener("click", loadPassports);
 
-//making one of the little stamp cards
-function addVisa(id, emoji, brand, item, createdAt){
-    const when = createdAt
-        ? new Date(Number(createdAt) * 1000).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})
-        : new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+//the category picker is UI only — the contract stores brand, model, registrar,
+//createdAt and metadataURI, and nothing else. so when we read a passport back off
+//the chain there's no category to read. rather than defaulting everything to a
+//handbag, work it out from the item text, which IS stored.
+//the proper fix is to put category in the IPFS metadata rather than adding an
+//on-chain field, since strings in storage are expensive and this never needs to
+//be read by another contract.
+//order matters, first match wins. bags sit above jewellery on purpose: "saddle
+//bag with chain" contains "chain", and checking jewellery first turned a handbag
+//into a ring.
+const EMOJI_WORDS = [
+    ["👜", ["bag","tote","purse","clutch","saddle","hobo","satchel","baguette","pouch","handbag"]],
+    ["🧥", ["trench","coat","jacket","parka","blazer","puffer","overcoat","mac"]],
+    ["👟", ["sneaker","trainer","loafer","boot","heel","shoe","waffle","air max","runner","mule","sandal"]],
+    ["👗", ["dress","gown","skirt","slip"]],
+    ["👕", ["shirt","tee","t-shirt","top","blouse","knit","jumper","sweater","hoodie","cardigan"]],
+    ["👖", ["jean","denim","trouser","pant","chino","short"]],
+    ["🧢", ["hat","cap","beanie","beret"]],
+    ["🕶️", ["sunglass","glasses","shades","eyewear"]],
+    ["🧣", ["scarf","shawl","stole"]],
+    ["⌚", ["watch"]],
+    ["💍", ["ring","necklace","bracelet","earring","pendant","trinity","jewel","brooch"]]
+];
 
-    const v = document.createElement("div");
-    v.className = "visa";
+function emojiFor(brand, item){
+    const text = ((item || "") + " " + (brand || "")).toLowerCase();
+    for (const [emoji, words] of EMOJI_WORDS) {
+        if (words.some(w => text.includes(w))) return emoji;
+    }
+    return "👜";   //fallback when nothing matches
+}
+
+//the category is presentational, so it doesn't belong in contract storage —
+//real ERC-721s keep traits like this in the token metadata, not in a Solidity
+//string that costs gas and that no other contract ever reads. until the IPFS
+//metadata layer exists, we remember the choice in this browser instead.
+//
+//the honest limit: localStorage lives on one machine. whoever you transfer a
+//piece to, and anyone else opening the site, falls back to emojiFor() below.
+//nothing breaks, the icon is just a guess for them.
+const CAT_KEY = "dfp.categories";
+
+function loadCats(){
+    try { return JSON.parse(localStorage.getItem(CAT_KEY)) || {}; }
+    catch (_) { return {}; }        //private mode, or someone cleared it
+}
+
+function rememberCat(id, emoji){
+    try {
+        const cats = loadCats();
+        cats[String(id)] = emoji;
+        localStorage.setItem(CAT_KEY, JSON.stringify(cats));
+    } catch (_) { /* storage unavailable, we just fall back to guessing */ }
+}
+
+//what she picked if this browser saw it minted, otherwise a guess from the text
+function emojiOf(p){
+    return loadCats()[String(p.id)] || emojiFor(p.brand, p.item);
+}
+
+function when(createdAt){
+    const d = createdAt ? new Date(Number(createdAt) * 1000) : new Date();
+    return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
+}
+
+//making one of the little stamp cards. it's a <button> rather than a <div> so it
+//can be tabbed to and activated with the keyboard, not just clicked.
+function addVisa(p){
+    const v = document.createElement("button");
+    v.className = "visa" + (current && current.id === p.id ? " active" : "");
     //using textContent for the brand and item because they came from a user typing
     v.innerHTML =
         '<div class="e"></div><div class="brand"></div><div class="item"></div>' +
-        '<div class="id">#' + pad(id) + ' · ' + when.toUpperCase() + '</div><div class="ring"></div>';
-    v.querySelector(".e").textContent = emoji;
-    v.querySelector(".brand").textContent = brand;
-    v.querySelector(".item").textContent = item;
+        '<div class="id">#' + pad(p.id) + ' · ' + when(p.createdAt) + '</div><div class="ring"></div>';
+    v.querySelector(".e").textContent = emojiOf(p);
+    v.querySelector(".brand").textContent = p.brand;
+    v.querySelector(".item").textContent = p.item;
+    v.addEventListener("click", () => openTo(p));
 
-    $("grid").prepend(v);
+    $("grid").appendChild(v);
     $("empty").hidden = true;
 }
+
+// ── looking at a passport you already own ─────────────
+let myPassports = [];
+let current = null;
+
+//turning to a page: open the cover if it's shut, then sweep a leaf across and
+//swap the content while it's hidden behind it
+function openTo(p){
+    const wasOpen = book.classList.contains("open");
+
+    //the stamps are a long way down the page, so bring the passport into view
+    //first. otherwise it opens somewhere above the fold and nothing appears to
+    //have happened.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.querySelector(".stage").scrollIntoView({
+        behavior: reduced ? "auto" : "smooth",
+        block: "center"
+    });
+
+    //let the scroll land before the cover starts swinging, so she actually sees it open
+    const settle = reduced ? 0 : 420;
+
+    setTimeout(() => {
+        book.classList.add("open");
+
+        setTimeout(() => {
+            const leaf = $("leaf");
+            leaf.classList.remove("turn");
+            void leaf.offsetWidth;           //forces the browser to restart the animation
+            leaf.classList.add("turn");
+            setTimeout(() => fillDetail(p), 300);
+        }, wasOpen ? 0 : 900);
+    }, settle);
+}
+
+function fillDetail(p){
+    current = p;
+
+    $("pTitle").textContent = p.brand;
+    $("tokenNo").textContent = "TOKEN #" + pad(p.id);
+    $("dBrand").textContent  = p.brand;
+    $("dItem").textContent   = p.item;
+    $("dDate").textContent   = when(p.createdAt);
+    //registrar never changes, holder does. after a resale these differ, and that
+    //gap is the provenance the whole project is about.
+    $("dReg").textContent    = short(p.registrar) + (sameAddr(p.registrar, myAddress) ? " (you)" : "");
+    $("dOwner").textContent  = short(myAddress) + " (you)";
+    $("dUri").textContent    = p.uri || "no-proof";
+
+    $("photo").textContent = emojiOf(p);
+    $("mrz").innerHTML =
+        "P&lt;DFP" + p.brand.toUpperCase().replace(/[^A-Z0-9]/g,"<").padEnd(10,"<") + "&lt;&lt;" +
+        p.item.toUpperCase().replace(/[^A-Z0-9]/g,"<").slice(0,12) +
+        "<br>00000000" + pad(p.id) + "DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02";
+
+    $("stamp").classList.remove("on");
+    $("xstamp").classList.remove("on");
+    $("startBtn").hidden = false;
+    showDetail();
+
+    //re-highlight the matching card
+    $("grid").querySelectorAll(".visa").forEach((el,i) => {
+        el.classList.toggle("active", myPassports[i] && myPassports[i].id === p.id);
+    });
+}
+
+function sameAddr(a,b){ return a && b && a.toLowerCase() === b.toLowerCase(); }
+
+//the piece has left the wallet, so stop offering to transfer it again
+function markCurrentGone(){
+    $("startBtn").hidden = true;
+    $("xstamp").classList.add("on");
+}
+
+// ── the three screens on the right hand page ──────────
+function showEntry(){
+    $("entry").hidden = false;
+    $("detail").hidden = true;
+    $("tf").hidden = true;
+    $("confirm").classList.remove("on");
+    $("pTitle").textContent = "Entry";
+}
+function showDetail(){
+    $("entry").hidden = true;
+    $("detail").hidden = false;
+    $("tf").hidden = true;
+    $("confirm").classList.remove("on");
+    $("tferr").textContent = "";
+}
+function showForm(){
+    $("entry").hidden = true;
+    $("detail").hidden = true;
+    $("tf").hidden = false;
+    $("confirm").classList.remove("on");
+    setTimeout(() => $("toAddr").focus(), 100);
+}
+
+$("startBtn").addEventListener("click", showForm);
+$("backBtn").addEventListener("click", showDetail);
+$("cancelBtn").addEventListener("click", showForm);
+$("toAddr").addEventListener("input", () => $("tferr").textContent = "");
+
+// ── checking the address before they get anywhere near confirm ──
+$("reviewBtn").addEventListener("click", () => {
+    const to = $("toAddr").value.trim();
+
+    if (!to) { $("tferr").textContent = "Enter the address you're sending to"; return; }
+
+    //ethers.isAddress rather than a regex: it also validates the EIP-55 checksum,
+    //so a single mistyped character in a mixed-case address is caught here instead
+    //of sending the piece into a wallet nobody controls.
+    if (!ethers.isAddress(to)) { $("tferr").textContent = "That's not a valid wallet address"; return; }
+
+    if (sameAddr(to, myAddress)) { $("tferr").textContent = "That's your own address"; return; }
+
+    $("tferr").textContent = "";
+    $("cPiece").textContent = current.brand + " — " + current.item;
+    $("cAddr").textContent = to;
+    $("confirm").classList.add("on");
+});
+
+// ── the actual transfer ───────────────────────────────
+$("confirmBtn").addEventListener("click", async () => {
+    const btn = $("confirmBtn");
+    const to = $("toAddr").value.trim();
+    if (!current || !contract) return;
+
+    btn.disabled = true;
+    btn.textContent = "Confirm in MetaMask 🦊";
+
+    try {
+        //from is ME, not the recipient. transferFrom moves a token OUT of the
+        //`from` address, so passing `to` here would try to move it out of their
+        //wallet and revert.
+        const tx = await contract.transferFrom(myAddress, to, current.id);
+
+        btn.textContent = "Sending… ⛓️";
+        await tx.wait();
+
+        $("confirm").classList.remove("on");
+        $("xstampTo").textContent = "TO " + short(to);
+        $("dOwner").textContent = short(to);
+        showDetail();
+        markCurrentGone();
+
+        //read the grid back from the chain rather than patching the card. the piece
+        //is no longer ours, so it drops out of the collection on its own.
+        await loadPassports();
+
+        $("toAddr").value = "";
+        await wait(1600);
+        book.classList.remove("open");
+
+    } catch (e) {
+        const msg = (e.code === 4001 || e.code === "ACTION_REJECTED")
+            ? "You cancelled it in MetaMask"
+            : (e.shortMessage || e.message || "Transfer failed");
+        $("confirm").classList.remove("on");
+        showForm();
+        $("tferr").textContent = msg;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Yes, transfer it 🔑";
+    }
+});
 
 // ── the sparkles, purely decorative ───────────────────
 ["✨","✦","💖","✨","⭑","✨","💫","✦","✨","⭒","💗","✨"].forEach((g,i) => {
