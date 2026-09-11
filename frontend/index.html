@@ -642,6 +642,11 @@ async function connect(){
         $("status").textContent = "Connected: " + myAddress;
     }
 
+    //whoever was on screen belonged to the previous account, so drop it before
+    //loading this one's collection
+    current = null;
+    showEntry();
+
     //now we know who they are we can load what they already own
     loadPassports();
 }
@@ -1127,6 +1132,11 @@ function showEntry(){
     $("tf").hidden = true;
     $("confirm").classList.remove("on");
     $("pTitle").textContent = "Entry";
+    //both stamps sit in .page-right, which every screen shares. without clearing
+    //them here a TRANSFERRED stamp from the piece you just sent stays sitting on
+    //the blank form for the next one.
+    $("stamp").classList.remove("on");
+    $("xstamp").classList.remove("on");
 }
 function showDetail(){
     $("entry").hidden = true;

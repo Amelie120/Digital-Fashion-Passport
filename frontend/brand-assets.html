@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Brand assets — screenshot these</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --cover:#A30F49; --cover-hi:#D4246F;
+  --foil:#E9CE7B; --foil-deep:#B8933C;
+  --ground:#190612; --hot:#FF2E88; --ink-soft:#C298AF;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:#2a2a2a; color:#eee; padding:40px;
+  font-family:Karla,system-ui,sans-serif;
+}
+h2{font-family:Karla,sans-serif; font-size:15px; font-weight:700; margin:0 0 4px}
+p.note{font-size:13px; color:#aaa; margin:0 0 14px}
+section{margin-bottom:56px}
+
+/* ── the square logo, 512x512 ──────────────────────────────── */
+.logo{
+  width:512px; height:512px; position:relative; overflow:hidden;
+  border-radius:0;                       /* square corners crop cleanly */
+  background:
+    radial-gradient(120% 90% at 30% 0%, var(--cover-hi), transparent 60%),
+    linear-gradient(160deg, var(--cover), #78092F);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:22px; text-align:center;
+}
+/* the gold keyline, same as the passport cover */
+.logo::after{
+  content:""; position:absolute; inset:30px;
+  border:3px solid rgba(233,206,123,.55); border-radius:6px;
+}
+.logo .crest{font-size:132px; line-height:1; filter:drop-shadow(0 6px 16px rgba(0,0,0,.4))}
+.logo h1{
+  margin:0; font-family:"Bodoni Moda",Didot,Georgia,serif; font-weight:700;
+  font-size:56px; line-height:1.04;
+  background:linear-gradient(100deg, var(--foil-deep), #FFF0BE 45%, var(--foil-deep));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.logo .chip{
+  width:66px; height:48px; border-radius:7px;
+  background:linear-gradient(135deg, var(--foil), #8C6C1F);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+}
+
+/* ── the tiny mark, for favicons and small sizes ───────────── */
+.mark{
+  width:512px; height:512px; position:relative;
+  background:
+    radial-gradient(120% 90% at 30% 0%, var(--cover-hi), transparent 60%),
+    linear-gradient(160deg, var(--cover), #78092F);
+  display:grid; place-items:center;
+}
+.mark::after{
+  content:""; position:absolute; inset:34px;
+  border:4px solid rgba(233,206,123,.55); border-radius:8px;
+}
+.mark .crest{font-size:250px; line-height:1; filter:drop-shadow(0 8px 20px rgba(0,0,0,.45))}
+
+/* ── the banner, 1500x500 ──────────────────────────────────── */
+/* 1280x720 is 16:9 — the ratio the submission form asks for. it suggests
+   640x360, which is the same shape; this is double so it stays sharp. */
+.banner{
+  width:1280px; height:720px; position:relative; overflow:hidden;
+  background:var(--ground);
+  display:flex; align-items:center; gap:62px; padding:0 76px;
+}
+/* soft glow so the flat dark doesn't look empty */
+.banner::before{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(85% 95% at 62% 45%, rgba(163,15,73,.45), transparent 66%);
+}
+.banner > *{position:relative}
+
+.banner .book{
+  flex:none; width:340px; height:480px; border-radius:6px 14px 14px 6px;
+  background:
+    radial-gradient(120% 90% at 30% 0%, var(--cover-hi), transparent 60%),
+    linear-gradient(160deg, var(--cover), #78092F);
+  box-shadow:0 30px 60px rgba(0,0,0,.5);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; position:relative; transform:rotate(-4deg);
+}
+.banner .book::after{
+  content:""; position:absolute; inset:15px;
+  border:2px solid rgba(233,206,123,.55); border-radius:4px 10px 10px 4px;
+}
+.banner .book .crest{font-size:76px; line-height:1}
+.banner .book h3{
+  margin:0; font-family:"Bodoni Moda",serif; font-weight:700; font-size:33px; line-height:1.08;
+  background:linear-gradient(100deg, var(--foil-deep), #FFF0BE 45%, var(--foil-deep));
+  -webkit-background-clip:text; background-clip:text; color:transparent; text-align:center;
+}
+.banner .book .chip{
+  width:52px; height:38px; border-radius:5px;
+  background:linear-gradient(135deg, var(--foil), #8C6C1F);
+}
+
+.banner .words{display:grid; gap:20px}
+.banner .eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:17px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--ink-soft);
+}
+.banner h2{
+  margin:0; font-family:"Bodoni Moda",Didot,Georgia,serif; font-weight:700;
+  font-size:76px; line-height:1.03; color:#FFE9F3; max-width:13ch;
+}
+.banner h2 em{font-style:italic; color:var(--hot)}
+.banner p{margin:0; font-size:22px; line-height:1.5; color:var(--ink-soft); max-width:34ch}
+</style>
+</head>
+<body>
+
+<section>
+  <h2>LOGO — 512 × 512 (square)</h2>
+  <p class="note">Screenshot this square. Cmd+Shift+4, drag corner to corner. This is the main one.</p>
+  <div class="logo">
+    <div class="crest">👜</div>
+    <h1>Digital<br>Fashion<br>Passport</h1>
+    <div class="chip"></div>
+  </div>
+</section>
+
+<section>
+  <h2>ALTERNATE MARK — 512 × 512</h2>
+  <p class="note">Simpler, reads better at very small sizes. Use if the wordmark looks cramped.</p>
+  <div class="mark"><div class="crest">👜</div></div>
+</section>
+
+<section>
+  <h2>COVER IMAGE — 1280 × 720 (16:9)</h2>
+  <p class="note">16:9, exactly what the submission form wants. Screenshot edge to edge. If it doesn't fit on screen, Cmd+Minus to zoom out first — the ratio stays correct.</p>
+  <div class="banner">
+    <div class="book">
+      <div class="crest">👜</div>
+      <h3>Digital<br>Fashion<br>Passport</h3>
+      <div class="chip"></div>
+    </div>
+    <div class="words">
+      <div class="eyebrow">Sepolia testnet · ERC-721</div>
+      <h2>Want to keep track of <em>your things?</em></h2>
+      <p>Every item you own gets a page in one passport, saved on-chain and yours to carry between closets.</p>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
