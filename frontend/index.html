@@ -1,60 +1,692 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Digital Fashion Passport</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Fashion Passport</title>
 
-    <!-- connecting the ether.js from CDN so it can interact-->
-     <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<!-- connecting the ether.js from CDN so it can interact -->
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+
+<!-- the fonts: bodoni for headings (its the vogue one), karla for text, plex mono for the data bits -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#FFF4F8;
+  --surface:#FFFFFF;
+  --ink:#3D0A26;
+  --ink-soft:#8A5C72;
+  --line:#F5D6E3;
+  --hot:#FF2E88;
+  --rose-deep:#B21354;
+  --mint:#0E9C81;
+  /* the passport itself keeps these colours in dark mode, like a real object */
+  --cover:#A30F49;
+  --cover-hi:#D4246F;
+  --foil:#E9CE7B;
+  --foil-deep:#B8933C;
+  --paper:#FFF9FB;
+  --paper-line:#F0D9E4;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#190612; --surface:#26101E; --ink:#FFE9F3; --ink-soft:#C298AF;
+    --line:#4A1F38; --hot:#FF63A6; --rose-deep:#FF9CC6; --mint:#3FD3B4;
+  }
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:Karla,"Helvetica Neue",Arial,sans-serif; font-size:16px; line-height:1.6;
+  overflow-x:hidden;
+}
+h1,h2,h3{font-family:"Bodoni Moda",Didot,Georgia,serif; font-weight:700; margin:0; text-wrap:balance}
+.wrap{max-width:1080px; margin:0 auto; padding:0 24px}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft);
+}
+
+/* ── nav ─────────────────────────────────────────── */
+.nav{display:flex; align-items:center; gap:16px; padding:20px 0; flex-wrap:wrap}
+.logo{font-family:"Bodoni Moda",serif; font-weight:700; font-size:20px}
+.logo span{color:var(--hot)}
+.nav .spacer{flex:1}
+.nav a{color:inherit; text-decoration:none; font-size:14px; color:var(--ink-soft)}
+.nav a:hover{color:var(--hot)}
+
+.btn{
+  font-family:Karla,sans-serif; font-weight:700; font-size:14px;
+  border:2px solid var(--ink); background:var(--hot); color:#fff;
+  padding:10px 18px; border-radius:999px; cursor:pointer;
+  box-shadow:4px 4px 0 var(--ink); transition:transform .15s, box-shadow .15s;
+}
+.btn:hover{transform:translate(-2px,-2px); box-shadow:6px 6px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink)}
+.btn.ghost{background:var(--surface); color:var(--ink)}
+.btn:focus-visible{outline:3px solid var(--rose-deep); outline-offset:3px}
+
+/* ── hero ────────────────────────────────────────── */
+.hero{
+  display:grid; gap:14px; padding:28px 0 4px;
+  justify-items:center; text-align:center;
+}
+.hero h1{font-size:clamp(34px,5vw,56px); line-height:1.06; letter-spacing:-.02em; max-width:15ch}
+.hero h1 em{font-style:italic; color:var(--hot)}
+.hero p{color:var(--ink-soft); max-width:46ch; margin:0}
+#status{
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft);
+  word-break:break-all; margin:0;
+}
+
+/* ── the passport ────────────────────────────────── */
+.stage{perspective:2200px; display:flex; justify-content:center; min-height:520px; padding:24px 0 8px}
+.book{
+  position:relative; width:320px; height:452px; transform-style:preserve-3d;
+  transition:transform .9s cubic-bezier(.22,1,.36,1);
+}
+.book.open{transform:translateX(160px)}
+@media (max-width:760px){ .book.open{transform:translateX(0) scale(.52)} }
+
+.face{position:absolute; inset:0; border-radius:6px 14px 14px 6px; backface-visibility:hidden; overflow:hidden}
+
+/* the cover. it rotates from its left edge, like a real hinge */
+.cover-wrap{
+  position:absolute; inset:0; transform-style:preserve-3d;
+  transform-origin:left center; z-index:3; cursor:pointer;
+  transition:transform 1.1s cubic-bezier(.62,.02,.2,1);
+}
+.book.open .cover-wrap{transform:rotateY(-176deg)}
+
+.cover{
+  background:
+    radial-gradient(120% 90% at 30% 0%, var(--cover-hi), transparent 60%),
+    linear-gradient(160deg,var(--cover),#78092F);
+  color:var(--foil); text-align:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:34px 26px; box-shadow:0 30px 50px rgba(122,9,47,.35);
+}
+.cover::after{
+  content:""; position:absolute; inset:14px; pointer-events:none;
+  border:1.5px solid rgba(233,206,123,.55); border-radius:4px 10px 10px 4px;
+}
+.crest{font-size:52px; animation:float 5s ease-in-out infinite; filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.cover h2{
+  font-size:27px; line-height:1.1;
+  background:linear-gradient(100deg,var(--foil-deep),#FFF0BE 45%,var(--foil-deep));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.chip{
+  width:44px; height:32px; border-radius:5px; margin-top:6px;
+  background:linear-gradient(135deg,var(--foil),#8C6C1F);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+}
+.tap{
+  position:absolute; bottom:26px; left:0; right:0;
+  font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.16em;
+  color:rgba(255,240,190,.9); transition:opacity .3s;
+}
+.book.open .tap{opacity:0}
+
+/* the back of the cover is the photo page */
+.page-left{
+  transform:rotateY(180deg); background:var(--paper); color:#3D0A26;
+  padding:22px 20px; display:flex; flex-direction:column; gap:14px;
+  box-shadow:inset 8px 0 18px rgba(122,9,47,.12);
+}
+.photo{
+  flex:1; border:1px solid var(--paper-line); border-radius:4px; overflow:hidden;
+  display:grid; place-items:center; font-size:96px;
+  background:repeating-linear-gradient(45deg,#FFF,#FFF 6px,#FDF0F5 6px,#FDF0F5 12px);
+}
+.photo img{width:100%; height:100%; object-fit:cover; display:block}
+.mrz{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; line-height:1.5; color:#5A2340;
+  border-top:1px solid var(--paper-line); padding-top:10px; word-break:break-all;
+}
+
+/* the right hand page, where the form lives */
+.page-right{
+  z-index:1; background:var(--paper); color:#3D0A26; padding:24px 22px;
+  display:flex; flex-direction:column;
+  box-shadow:0 30px 50px rgba(122,9,47,.22), inset -8px 0 18px rgba(122,9,47,.08);
+}
+.page-right::before{
+  content:""; position:absolute; inset:0; opacity:.35; pointer-events:none;
+  background:
+    repeating-linear-gradient(75deg,rgba(255,46,136,.09) 0 1px,transparent 1px 9px),
+    repeating-linear-gradient(-75deg,rgba(255,46,136,.07) 0 1px,transparent 1px 9px);
+}
+.page-right > *{position:relative}
+.ph{
+  display:flex; align-items:baseline; justify-content:space-between;
+  border-bottom:1.5px solid var(--paper-line); padding-bottom:8px; margin-bottom:12px;
+}
+.ph .t{font-family:"Bodoni Moda",serif; font-size:15px; font-weight:700}
+.ph .n{font-family:"IBM Plex Mono",monospace; font-size:10px; color:#A8607F}
+
+.field{display:grid; gap:3px; margin-bottom:11px}
+.field label{
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:#B0708C;
+}
+.field input,.field select{
+  font-family:Karla,sans-serif; font-size:14px; color:#3D0A26; width:100%;
+  border:0; border-bottom:1.5px dotted #E3B9CD; background:transparent; padding:4px 0;
+}
+.field input:focus,.field select:focus{outline:0; border-bottom-color:var(--hot)}
+.field input::placeholder{color:#D9AFC3}
+.val{font-size:14px; font-weight:500; word-break:break-all}
+
+.attach{
+  font-family:Karla,sans-serif; font-size:13px; font-weight:500; color:#B21354;
+  border:1.5px dashed #E3B9CD; background:transparent; border-radius:6px;
+  padding:9px; width:100%; cursor:pointer; transition:border-color .2s, background .2s;
+}
+.attach:hover{border-color:#FF2E88; background:#FFF0F6}
+.attach.has{border-style:solid; border-color:#0E9C81; color:#0E9C81}
+
+.mint-btn{
+  margin-top:auto; width:100%; border:2px solid #3D0A26; background:#FF2E88; color:#fff;
+  font-family:Karla,sans-serif; font-weight:700; font-size:14px; padding:11px;
+  border-radius:999px; cursor:pointer; box-shadow:3px 3px 0 #3D0A26;
+  transition:transform .15s, box-shadow .15s;
+}
+.mint-btn:hover{transform:translate(-2px,-2px); box-shadow:5px 5px 0 #3D0A26}
+.mint-btn[disabled]{opacity:.6; cursor:wait; transform:none}
+.err{font-size:12px; color:#C62828; margin:6px 0 0}
+
+/* the + tab poking out of the closed passport */
+.plus{
+  position:absolute; right:-16px; top:-16px; z-index:5;
+  width:52px; height:52px; border-radius:50%; border:2px solid var(--ink);
+  background:var(--surface); color:var(--hot); font-size:26px; line-height:1;
+  cursor:pointer; box-shadow:4px 4px 0 var(--ink); transition:transform .2s, opacity .3s;
+}
+.plus:hover{transform:rotate(90deg) scale(1.08)}
+.book.open .plus{opacity:0; pointer-events:none}
+
+/* the stamp that lands once its on chain */
+.stamp{
+  position:absolute; right:14px; bottom:78px; z-index:4;
+  border:3px solid var(--mint); color:var(--mint); border-radius:8px; padding:6px 10px;
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.12em;
+  text-align:center; transform:rotate(-14deg) scale(2.4); opacity:0; pointer-events:none;
+}
+.stamp.on{animation:thud .5s cubic-bezier(.3,1.6,.5,1) forwards}
+.stamp b{display:block; font-size:13px; letter-spacing:.06em}
+@keyframes thud{to{transform:rotate(-14deg) scale(1); opacity:.9}}
+@keyframes float{50%{transform:translateY(-9px)}}
+
+/* ── about ───────────────────────────────────────── */
+.about{padding:64px 0 8px; display:grid; gap:26px}
+.about h2{font-size:clamp(28px,4vw,40px); max-width:18ch}
+.steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:20px}
+.step{display:grid; gap:6px; padding-top:14px; border-top:2px solid var(--line)}
+.step .num{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--hot); letter-spacing:.2em}
+.step h3{font-size:19px}
+.step p{margin:0; font-size:14.5px; color:var(--ink-soft)}
+
+/* ── the collection of stamps ────────────────────── */
+.collection{padding:56px 0 72px; display:grid; gap:18px}
+.chead{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.chead h2{font-size:clamp(24px,3.4vw,32px)}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px}
+.visa{
+  background:var(--surface); border:1.5px solid var(--line); border-radius:4px;
+  padding:16px; display:grid; gap:4px; position:relative; overflow:hidden; transition:transform .2s;
+}
+.visa:hover{transform:translateY(-4px) rotate(-.6deg)}
+.visa .e{font-size:34px; line-height:1}
+.visa .brand{font-family:"Bodoni Moda",serif; font-size:17px; font-weight:700}
+.visa .item{font-size:14px; color:var(--ink-soft)}
+.visa .id{
+  font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--hot);
+  letter-spacing:.1em; margin-top:6px; font-variant-numeric:tabular-nums;
+}
+.visa .ring{
+  position:absolute; right:-14px; bottom:-14px; width:74px; height:74px;
+  border-radius:50%; border:2px dashed var(--mint); opacity:.5;
+}
+.empty{color:var(--ink-soft); font-size:14.5px; margin:0}
+
+footer{
+  border-top:2px solid var(--line); padding:22px 0 40px; display:flex; gap:14px;
+  flex-wrap:wrap; align-items:center;
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft);
+}
+footer .dot{width:7px; height:7px; border-radius:50%; background:var(--mint)}
+footer a{color:var(--hot)}
+
+/* the sparkles */
+.sparkle{position:fixed; pointer-events:none; z-index:2; opacity:0; animation:tw 4s ease-in-out infinite}
+@keyframes tw{0%,100%{opacity:0; transform:scale(.4)}50%{opacity:.85; transform:scale(1) rotate(25deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important; transition-duration:.15s !important}
+}
+</style>
 </head>
 
 <body>
-    <h1> Digital Fashion Passport</h1>
-    <button id="connectBtn">Connect Wallet</button>
+<div class="wrap">
+
+  <nav class="nav">
+    <div class="logo">Digital Fashion <span>Passport</span> ✨</div>
+    <div class="spacer"></div>
+    <a href="#about">How it works</a>
+    <button class="btn ghost" id="connectBtn">Connect Wallet 👛</button>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">Sepolia testnet · ERC-721</div>
+    <h1>Want to keep track of <em>your things?</em></h1>
+    <p>Every piece you own gets a page in one passport. Brand, item, the day it entered your wardrobe — saved on-chain, yours to carry between closets. 💖</p>
     <p id="status">Not connected</p>
-    <button id="viewBtn">View Passport List</button>
-    <button id="transferBtn">Transfer</button>
-    <script>
-        //adding the sepolia address and the ABI
-        const ADDRESS = "0x67ad5c6b250f08b1cfd749cc371cdd140d81a61f"
+  </header>
 
-        const ABI = [
-            "function createPassport(string,string,string) returns (uint256)",
-            "function getPassport(uint256) view returns (tuple(string,string,address,uint256,string))",
-            "function ownerOf(uint256) view returns (address)",
-            "function nextPassportId() view returns (uint256)",
-            "function transferFrom(address,address,uint256)"
-        ];
-        //when the user connects we fill these in 
-        let provider;
-        let signer;
-        let contract;
+  <div class="stage">
+    <div class="book" id="book">
+      <button class="plus" id="plusBtn" aria-label="Add an item">+</button>
 
-        //connecting to MetaMask
-        async function connect(){
-            if (!window.ethereum) {
-                document.getElementById("status").textContent = "MetaMask not found";
-                return;
-            }
+      <!-- the right hand page. it sits under the cover so its revealed when it opens -->
+      <div class="face page-right">
+        <div class="ph"><span class="t">Entry</span><span class="n" id="tokenNo">TOKEN #—</span></div>
 
-            //the connection 
-            provider = new ethers.BrowserProvider(window.ethereum);
+        <div class="field">
+          <label for="fBrand">Maison / brand</label>
+          <input id="fBrand" placeholder="Who made it?">
+        </div>
+        <div class="field">
+          <label for="fItem">Item</label>
+          <input id="fItem" placeholder="What is it?">
+        </div>
+        <div class="field">
+          <label for="fEmoji">Category</label>
+          <select id="fEmoji">
+            <option value="🧥">🧥 Outerwear</option>
+            <option value="👜">👜 Bag</option>
+            <option value="👟">👟 Shoes</option>
+            <option value="💍">💍 Jewellery</option>
+            <option value="👗">👗 Dress</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Photo of the piece</label>
+          <input type="file" id="fFile" accept="image/*" hidden>
+          <button class="attach" id="attachBtn">📎 Attach a photo</button>
+        </div>
+        <div class="field">
+          <label for="fUri">Proof link (optional)</label>
+          <input id="fUri" placeholder="ipfs://… or a receipt link">
+        </div>
+        <div class="field">
+          <label>Holder</label>
+          <div class="val" id="holder">not connected</div>
+        </div>
 
-            //asking the user to approve
-            signer = await provider.getSigner();
+        <button class="mint-btn" id="mintBtn">Save &amp; lock 🔒</button>
+        <p class="err" id="err" hidden></p>
 
-            //passing the contract, as a javascript object
-            contract = new ethers.Contract(ADDRESS, ABI, signer);
-            
-            //waiting till the person actually approves
-            const address = await signer.getAddress();
-            document.getElementById("status").textContent = "Connected: "  + address;
+        <div class="stamp" id="stamp"><b>ON-CHAIN</b><span id="stampDate">SEPOLIA</span></div>
+      </div>
+
+      <!-- the cover, and its back face which is the photo page -->
+      <div class="cover-wrap" id="coverWrap">
+        <div class="face cover">
+          <div class="crest">👜</div>
+          <h2>Digital<br>Fashion<br>Passport</h2>
+          <div class="chip"></div>
+          <div class="tap" id="tapHint">✦ TAP TO ADD ITEMS ✦</div>
+        </div>
+        <div class="face page-left">
+          <div class="ph"><span class="t">Bearer</span><span class="n">DFP</span></div>
+          <div class="photo" id="photo">🧥</div>
+          <div class="mrz" id="mrz">P&lt;DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br>0000000000DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="about" id="about">
+    <div class="eyebrow">How it works</div>
+    <h2>Three steps between a receipt and a record.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="num">01</div>
+        <h3>Connect your wallet 👛</h3>
+        <p>MetaMask on Sepolia. Your address becomes the name on the passport — no account, no password.</p>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <h3>Fill in the page ✍️</h3>
+        <p>Maison, item, category, and a photo. Add a proof link if you have a receipt or an authentication card.</p>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <h3>Save and lock 🔒</h3>
+        <p>One transaction saves the entry as an ERC-721. Sell the piece and the passport transfers with it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="collection">
+    <div class="chead">
+      <h2>Stamps in this passport</h2>
+      <button class="btn ghost" id="viewBtn">Refresh 🔄</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="empty" id="empty">Connect your wallet to see what's already in here.</p>
+  </section>
+
+  <footer>
+    <span class="dot"></span>
+    <span>CONTRACT</span>
+    <a id="etherscan" href="https://sepolia.etherscan.io/address/0x67ad5c6b250f08b1cfd749cc371cdd140d81a61f">0x67ad…a61f</a>
+    <span>·</span>
+    <span>SEPOLIA</span>
+  </footer>
+</div>
+
+<script>
+//adding the sepolia address and the ABI
+const ADDRESS = "0x67ad5c6b250f08b1cfd749cc371cdd140d81a61f"
+
+const ABI = [
+    "function createPassport(string,string,string) returns (uint256)",
+    "function getPassport(uint256) view returns (tuple(string,string,address,uint256,string))",
+    "function ownerOf(uint256) view returns (address)",
+    "function nextPassportId() view returns (uint256)",
+    "function transferFrom(address,address,uint256)",
+    //added this one so we can read the token id back out of the receipt
+    "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"
+];
+
+//when the user connects we fill these in
+let provider;
+let signer;
+let contract;
+let myAddress = null;
+
+//sepolia's chain id. if metamask is on a different network nothing will work
+const SEPOLIA = 11155111n;
+
+//little shortcut so i dont write getElementById every time
+const $ = id => document.getElementById(id);
+
+//connecting to MetaMask
+async function connect(){
+    if (!window.ethereum) {
+        $("status").textContent = "MetaMask not found";
+        return;
+    }
+
+    //the connection
+    provider = new ethers.BrowserProvider(window.ethereum);
+
+    //asking the user to approve
+    signer = await provider.getSigner();
+
+    //passing the contract, as a javascript object
+    contract = new ethers.Contract(ADDRESS, ABI, signer);
+
+    //waiting till the person actually approves
+    myAddress = await signer.getAddress();
+    $("status").textContent = "Connected: " + myAddress;
+    $("connectBtn").textContent = short(myAddress) + " ✅";
+    $("holder").textContent = short(myAddress);
+
+    //checking theyre actually on sepolia, otherwise every call fails confusingly
+    const net = await provider.getNetwork();
+    if (net.chainId !== SEPOLIA) {
+        $("status").textContent = "Wrong network — switch MetaMask to Sepolia";
+        return;
+    }
+
+    //now we know who they are we can load what they already own
+    loadPassports();
+}
+
+//turning 0x1234...abcd into something that fits on screen
+function short(a){ return a.slice(0,6) + "…" + a.slice(-4); }
+
+//running the connect() when the button is clicked
+$("connectBtn").addEventListener("click", connect);
+
+// ── opening and closing the passport ──────────────────
+const book = $("book");
+
+function openBook(){
+    book.classList.add("open");
+    setTimeout(() => $("fBrand").focus(), 900);
+}
+
+//tapping the passport connects the wallet first if they havent
+async function tapPassport(){
+    if (!contract) { await connect(); }
+    if (contract) openBook();
+}
+
+$("coverWrap").addEventListener("click", () => {
+    if (book.classList.contains("open")) book.classList.remove("open");
+    else tapPassport();
+});
+$("plusBtn").addEventListener("click", e => { e.stopPropagation(); tapPassport(); });
+
+// ── the photo page updates as they type ───────────────
+let photoData = null;
+
+$("fEmoji").addEventListener("change", e => {
+    if (!photoData) $("photo").textContent = e.target.value;
+});
+
+$("attachBtn").addEventListener("click", () => $("fFile").click());
+
+$("fFile").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    //FileReader turns the file into a base64 string the img tag can show
+    const reader = new FileReader();
+    reader.onload = ev => {
+        photoData = ev.target.result;
+        $("photo").innerHTML = '<img src="' + photoData + '" alt="">';
+    };
+    reader.readAsDataURL(file);
+    $("attachBtn").textContent = "✓ " + file.name.slice(0,22);
+    $("attachBtn").classList.add("has");
+    //NOTE this photo only lives in this browser. to actually store it you need to
+    //upload to a pinning service (nft.storage / pinata) and put the ipfs:// link
+    //it gives back into the proof field, because that string is what goes on chain
+});
+
+//building the fake machine readable zone at the bottom of the photo page
+function mrzLine(){
+    const clean = s => (s || "").toUpperCase().replace(/[^A-Z0-9]/g,"<").slice(0,14).padEnd(14,"<");
+    return "P&lt;DFP" + clean($("fBrand").value) + "&lt;&lt;" + clean($("fItem").value) +
+           "<br>0000000000DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02";
+}
+$("fBrand").addEventListener("input", () => $("mrz").innerHTML = mrzLine());
+$("fItem").addEventListener("input", () => $("mrz").innerHTML = mrzLine());
+
+// ── saving it on chain ────────────────────────────────
+function showErr(msg){ $("err").textContent = msg; $("err").hidden = false; }
+function clearErr(){ $("err").hidden = true; }
+
+$("mintBtn").addEventListener("click", async () => {
+    clearErr();
+    const btn = $("mintBtn");
+
+    if (!contract) { showErr("Connect your wallet first"); return; }
+
+    const brand = $("fBrand").value.trim();
+    const item  = $("fItem").value.trim();
+    const uri   = $("fUri").value.trim() || "no-proof";
+
+    //checking the inputs before we make them pay gas for nothing
+    if (!brand || !item) { showErr("Fill in the brand and the item"); return; }
+
+    btn.disabled = true;
+    btn.textContent = "Confirm in MetaMask 🦊";
+
+    try {
+        //this sends the transaction. it is NOT done yet, tx is just a receipt-in-waiting
+        const tx = await contract.createPassport(brand, item, uri);
+
+        btn.textContent = "Saving on-chain… ⛓️";
+
+        //this is the one that waits for it to actually be in a block
+        const receipt = await tx.wait();
+
+        //digging the token id out of the Transfer event the contract emitted
+        const id = tokenIdFrom(receipt);
+
+        $("tokenNo").textContent = "TOKEN #" + pad(id);
+        $("stampDate").textContent = "SEPOLIA · #" + pad(id);
+        $("stamp").classList.add("on");
+        btn.textContent = "Locked 🔒";
+
+        addVisa(id, $("fEmoji").value, brand, item);
+
+        //let her see the stamp land, then shut the passport
+        await wait(1100);
+        book.classList.remove("open");
+        $("tapHint").textContent = "✦ ITEM #" + pad(id) + " SAVED · TAP TO ADD MORE ✦";
+
+        //fresh page ready for the next piece
+        setTimeout(resetPage, 1200);
+
+    } catch (e) {
+        //code 4001 is the user clicking reject in metamask, thats not really an error
+        const msg = (e.code === 4001 || e.code === "ACTION_REJECTED")
+            ? "You cancelled it in MetaMask"
+            : (e.shortMessage || e.message || "Something went wrong");
+        showErr(msg);
+        btn.disabled = false;
+        btn.textContent = "Save & lock 🔒";
+    }
+});
+
+//the receipt has raw logs in it. the contract interface knows how to decode them
+function tokenIdFrom(receipt){
+    for (const log of receipt.logs) {
+        try {
+            const parsed = contract.interface.parseLog(log);
+            if (parsed && parsed.name === "Transfer") return parsed.args.tokenId;
+        } catch (_) {
+            //logs from other contracts cant be parsed by ours, so we skip them
         }
+    }
+    return null;
+}
 
-            //running the connect() when the button is clicked
-            document.getElementById("connectBtn").addEventListener("click", connect);
+function pad(id){ return id === null ? "—" : String(id).padStart(4,"0"); }
+function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-        
-    </script>
+function resetPage(){
+    $("stamp").classList.remove("on");
+    $("tokenNo").textContent = "TOKEN #—";
+    $("fBrand").value = "";
+    $("fItem").value = "";
+    $("fUri").value = "";
+    photoData = null;
+    $("fFile").value = "";
+    $("photo").innerHTML = $("fEmoji").value;
+    $("attachBtn").textContent = "📎 Attach a photo";
+    $("attachBtn").classList.remove("has");
+    $("mrz").innerHTML = mrzLine();
+    clearErr();
+    $("mintBtn").disabled = false;
+    $("mintBtn").textContent = "Save & lock 🔒";
+}
+
+// ── reading the passports back out ────────────────────
+//checked against FashionPassport.sol. the struct is declared in this order:
+//  string brand; string model; address registrar; uint256 createdAt; string metadataURI;
+//getPassport returns it with no field names, so ethers hands back a plain array
+//and we label the positions ourselves here.
+//NOTE registrar is NOT the current owner. registrar is whoever first registered the
+//item and it never changes. the current owner comes from ownerOf(). after a resale
+//those two differ, and that difference is the whole point of the project.
+function unpack(p){
+    return { brand:p[0], item:p[1], registrar:p[2], createdAt:p[3], uri:p[4] };
+}
+
+async function loadPassports(){
+    if (!contract) return;
+    const grid = $("grid");
+    grid.innerHTML = "";
+    $("empty").textContent = "Loading…";
+    $("empty").hidden = false;
+
+    //nextPassportId is the id of the LAST one minted, because the contract does
+    //  uint256 id = ++nextPassportId;   (adds 1 FIRST, then uses it)
+    //so valid ids run 1..total INCLUSIVE. id 0 never exists.
+    const total = Number(await contract.nextPassportId());
+    const ids = Array.from({ length: total }, (_, k) => k + 1);
+
+    //ask for all of them at once instead of one after another. the old loop
+    //awaited inside itself, so 50 passports meant 100 round trips back to back.
+    const results = await Promise.all(
+        ids.map(async id => {
+            try {
+                const owner = await contract.ownerOf(id);
+                //only show the ones this wallet currently owns
+                if (owner.toLowerCase() !== myAddress.toLowerCase()) return null;
+                return { id, ...unpack(await contract.getPassport(id)) };
+            } catch (_) {
+                //id doesnt exist or the token was burned. skip it.
+                return null;
+            }
+        })
+    );
+
+    //drop the nulls, newest first
+    const mine = results.filter(Boolean).reverse();
+
+    for (const p of mine) {
+        addVisa(p.id, "👜", p.brand, p.item, p.createdAt);
+    }
+
+    $("empty").hidden = mine.length > 0;
+    if (mine.length === 0) $("empty").textContent = "Nothing in here yet — tap the passport to add your first piece.";
+}
+
+$("viewBtn").addEventListener("click", loadPassports);
+
+//making one of the little stamp cards
+function addVisa(id, emoji, brand, item, createdAt){
+    const when = createdAt
+        ? new Date(Number(createdAt) * 1000).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})
+        : new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+
+    const v = document.createElement("div");
+    v.className = "visa";
+    //using textContent for the brand and item because they came from a user typing
+    v.innerHTML =
+        '<div class="e"></div><div class="brand"></div><div class="item"></div>' +
+        '<div class="id">#' + pad(id) + ' · ' + when.toUpperCase() + '</div><div class="ring"></div>';
+    v.querySelector(".e").textContent = emoji;
+    v.querySelector(".brand").textContent = brand;
+    v.querySelector(".item").textContent = item;
+
+    $("grid").prepend(v);
+    $("empty").hidden = true;
+}
+
+// ── the sparkles, purely decorative ───────────────────
+["✨","✦","💖","✨","⭑","✨","💫","✦","✨","⭒","💗","✨"].forEach((g,i) => {
+    const s = document.createElement("span");
+    s.className = "sparkle";
+    s.textContent = g;
+    s.style.left = (5 + Math.random()*90) + "vw";
+    s.style.top  = (5 + Math.random()*90) + "vh";
+    s.style.fontSize = (10 + Math.random()*12) + "px";
+    s.style.animationDelay = (i * 0.38) + "s";
+    document.body.appendChild(s);
+});
+</script>
 </body>
 </html>
