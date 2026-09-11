@@ -77,6 +77,8 @@ h1,h2,h3{font-family:"Bodoni Moda",Didot,Georgia,serif; font-weight:700; margin:
 .hero h1{font-size:clamp(34px,5vw,56px); line-height:1.06; letter-spacing:-.02em; max-width:15ch}
 .hero h1 em{font-style:italic; color:var(--hot)}
 .hero p{color:var(--ink-soft); max-width:46ch; margin:0}
+#status a{color:var(--hot); text-decoration:none; border-bottom:1px dotted var(--hot)}
+#status a:hover{color:var(--rose-deep); border-bottom-color:var(--rose-deep)}
 #status{
   font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-soft);
   word-break:break-all; margin:0;
@@ -224,8 +226,17 @@ h1,h2,h3{font-family:"Bodoni Moda",Didot,Georgia,serif; font-weight:700; margin:
 /* ── about ───────────────────────────────────────── */
 .about{padding:64px 0 8px; display:grid; gap:26px}
 .about h2{font-size:clamp(28px,4vw,40px); max-width:18ch}
-.steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:20px}
-.step{display:grid; gap:6px; padding-top:14px; border-top:2px solid var(--line)}
+/* three shared rows: number, heading, body. subgrid makes every step use the
+   SAME row heights, so a taller emoji in one heading can't push that column's
+   text down while the others stay put. */
+.steps{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  grid-template-rows:auto auto auto; gap:20px;
+}
+.step{
+  display:grid; grid-row:span 3; grid-template-rows:subgrid; gap:6px;
+  padding-top:14px; border-top:2px solid var(--line);
+}
 .step .num{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--hot); letter-spacing:.2em}
 .step h3{font-size:19px}
 .step p{margin:0; font-size:14.5px; color:var(--ink-soft)}
@@ -358,29 +369,6 @@ footer a{color:var(--hot)}
 .visa:focus-visible{outline:3px solid var(--rose-deep); outline-offset:3px}
 .visa.active{border-color:var(--hot); border-width:2px}
 
-/* ── the "what is a wallet?" explainer ───────────── */
-.scrim{
-  position:fixed; inset:0; z-index:50; display:grid; place-items:center;
-  background:rgba(25,6,18,.72); padding:20px; backdrop-filter:blur(3px);
-}
-.scrim[hidden]{display:none}
-.modal{
-  background:var(--surface); color:var(--ink); border:2px solid var(--ink);
-  border-radius:16px; box-shadow:8px 8px 0 var(--hot);
-  max-width:440px; width:100%; padding:26px 24px; max-height:86vh; overflow-y:auto;
-}
-.modal h3{font-size:23px; margin-bottom:6px}
-.modal p{font-size:14px; color:var(--ink-soft); margin:0 0 14px}
-.modal ol{font-size:14px; padding-left:20px; margin:0 0 18px}
-.modal li{margin-bottom:9px}
-.modal li b{color:var(--ink)}
-.modal a{color:var(--hot); font-weight:700}
-.modal .row{display:flex; gap:10px; flex-wrap:wrap}
-.modal .note{
-  font-family:"IBM Plex Mono",monospace; font-size:11px; line-height:1.6;
-  background:var(--ground); border:1px solid var(--line); border-radius:8px;
-  padding:10px 12px; margin-bottom:16px; color:var(--ink-soft);
-}
 </style>
 </head>
 
@@ -398,8 +386,8 @@ footer a{color:var(--hot)}
   <header class="hero">
     <div class="eyebrow">Sepolia testnet · ERC-721</div>
     <h1>Want to keep track of <em>your things?</em></h1>
-    <p>Every piece you own gets a page in one passport. Brand, item, the day it entered your wardrobe — saved on-chain, yours to carry between closets. 💖</p>
-    <p id="status">Not connected</p>
+    <p>Every item you own gets a page in one passport. Brand, item, the day it entered your wardrobe, all saved on-chain and yours to carry between closets. 💖</p>
+    <p id="status"><a href="https://metamask.io/download/" target="_blank" rel="noopener">MetaMask not connected</a></p>
   </header>
 
   <div class="stage">
@@ -514,12 +502,12 @@ footer a{color:var(--hot)}
       <div class="step">
         <div class="num">01</div>
         <h3>Connect your wallet 👛</h3>
-        <p>MetaMask on Sepolia. Your address becomes the name on the passport — no account, no password.</p>
+        <p>MetaMask on Sepolia. Your address becomes the name on the passport, so there is no account and no password.</p>
       </div>
       <div class="step">
         <div class="num">02</div>
         <h3>Fill in the page ✍️</h3>
-        <p>Maison, item, category, and a photo. Add a proof link if you have a receipt or an authentication card.</p>
+        <p>Brand, item, category, and a photo. Add a proof link if you have a receipt or an authentication card.</p>
       </div>
       <div class="step">
         <div class="num">03</div>
@@ -545,36 +533,6 @@ footer a{color:var(--hot)}
     <span>·</span>
     <span>SEPOLIA</span>
   </footer>
-</div>
-
-<!-- shown when the visitor has no wallet extension at all. most people opening
-     this link have never heard of MetaMask, so explain it instead of erroring -->
-<div class="scrim" id="noWallet" hidden>
-  <div class="modal">
-    <h3>You'll need a digital wallet 👛</h3>
-    <p>
-      This is a blockchain app, so there's no username or password. Your
-      <b>wallet</b> is your account — it holds your address and signs anything you save.
-    </p>
-
-    <ol>
-      <li>Install <a href="https://metamask.io/download/" target="_blank" rel="noopener">MetaMask</a>, a free browser extension. It takes about two minutes.</li>
-      <li>Create a wallet and <b>save your recovery phrase somewhere safe</b>. Never share it with anyone.</li>
-      <li>In MetaMask, turn on test networks and switch to <b>Sepolia</b>.</li>
-      <li>Grab some free test ETH from the <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noopener">Sepolia faucet</a> to cover transaction fees.</li>
-      <li>Come back here and hit Connect Wallet.</li>
-    </ol>
-
-    <div class="note">
-      Nothing here costs real money. Sepolia is Ethereum's test network and the
-      ETH on it has no value — it exists so people can try things safely.
-    </div>
-
-    <div class="row">
-      <a class="btn" href="https://metamask.io/download/" target="_blank" rel="noopener">Get MetaMask →</a>
-      <button class="btn ghost" id="closeNoWallet">Maybe later</button>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -638,8 +596,11 @@ async function connect(){
     //no wallet extension at all. most first time visitors land here, so explain
     //what a wallet even is instead of showing them an error they cant act on.
     if (!window.ethereum) {
-        $("noWallet").hidden = false;
-        $("status").textContent = "No wallet detected — you'll need MetaMask";
+        //no wallet extension at all. the status line is already a link to
+        //metamask, so just say so plainly rather than throwing a dialog at them.
+        $("status").innerHTML =
+            '<a href="https://metamask.io/download/" target="_blank" rel="noopener">' +
+            'No wallet found. Get MetaMask →</a>';
         return;
     }
 
@@ -666,7 +627,7 @@ async function connect(){
         $("status").textContent = "Switching you to Sepolia…";
         const ok = await switchToSepolia();
         if (!ok) {
-            $("status").textContent = "Wrong network — please switch MetaMask to Sepolia";
+            $("status").textContent = "Wrong network. Please switch MetaMask to Sepolia";
             return;
         }
         //the chain changed underneath us, so rebuild everything against the new one
@@ -675,7 +636,7 @@ async function connect(){
         contract = new ethers.Contract(ADDRESS, ABI, signer);
         net = await provider.getNetwork();
         if (net.chainId !== SEPOLIA) {
-            $("status").textContent = "Wrong network — please switch MetaMask to Sepolia";
+            $("status").textContent = "Wrong network. Please switch MetaMask to Sepolia";
             return;
         }
         $("status").textContent = "Connected: " + myAddress;
@@ -707,7 +668,9 @@ async function disconnect(){
     $("connectBtn").textContent = "Connect Wallet 👛";
     $("connectBtn").hidden = false;
     $("disconnectBtn").hidden = true;
-    $("status").textContent = "Not connected";
+    $("status").innerHTML =
+        '<a href="https://metamask.io/download/" target="_blank" rel="noopener">' +
+        'MetaMask not connected</a>';
     $("holder").textContent = "not connected";
     $("grid").innerHTML = "";
     $("empty").textContent = "Connect your wallet to see what's already in here.";
@@ -731,12 +694,6 @@ if (window.ethereum) {
     window.ethereum.on("chainChanged", () => { if (myAddress) connect(); });
 }
 
-//closing the explainer
-$("closeNoWallet").addEventListener("click", () => { $("noWallet").hidden = true; });
-$("noWallet").addEventListener("click", e => {
-    //clicking the dark area outside the card closes it too
-    if (e.target.id === "noWallet") $("noWallet").hidden = true;
-});
 
 //turning 0x1234...abcd into something that fits on screen
 function short(a){ return a.slice(0,6) + "…" + a.slice(-4); }
@@ -976,7 +933,7 @@ async function loadPassports(){
     if (current && !mine.some(p => p.id === current.id)) markCurrentGone();
 
     $("empty").hidden = mine.length > 0;
-    if (mine.length === 0) $("empty").textContent = "Nothing in here yet — tap the passport to add your first piece.";
+    if (mine.length === 0) $("empty").textContent = "Nothing in here yet. Tap the passport to add your first piece.";
 }
 
 $("viewBtn").addEventListener("click", loadPassports);
