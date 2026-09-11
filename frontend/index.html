@@ -337,16 +337,20 @@ footer a{color:var(--hot)}
 
 /* the leaf that sweeps across when you turn to another item */
 .leaf{
-  position:absolute; inset:0; z-index:3; border-radius:6px 14px 14px 6px;
+  position:absolute; inset:0; z-index:4; border-radius:6px 14px 14px 6px;
   background:linear-gradient(90deg,#F6E2EB,var(--paper) 22%);
   transform-origin:left center; transform:rotateY(0deg); opacity:0;
   pointer-events:none; box-shadow:0 20px 40px rgba(122,9,47,.2);
+  /* once it swings past 90 degrees it's facing away from us, so hide it rather
+     than showing its mirrored back. that's what was flashing a second page. */
+  backface-visibility:hidden;
 }
-.leaf.turn{animation:turnpage .78s cubic-bezier(.55,.05,.3,1) forwards}
+/* the whole turn only has to cover 0-90 degrees now, because backface-visibility
+   makes it vanish at the halfway point. so it can be much quicker. */
+.leaf.turn{animation:turnpage .42s cubic-bezier(.4,0,.5,1) forwards}
 @keyframes turnpage{
   0%{opacity:1; transform:rotateY(0deg)}
-  99%{opacity:1; transform:rotateY(-172deg)}
-  100%{opacity:0; transform:rotateY(-172deg)}
+  100%{opacity:1; transform:rotateY(-104deg)}
 }
 
 /* stamp cards are buttons now, so they need resetting and a focus ring */
@@ -1003,6 +1007,10 @@ let current = null;
 function openTo(p){
     const wasOpen = book.classList.contains("open");
 
+    //already showing this exact piece. turning a page to land on the same page is
+    //just a white flash that looks broken, so only scroll to it.
+    const samePage = wasOpen && current && current.id === p.id;
+
     //the stamps are a long way down the page, so bring the passport into view
     //first. otherwise it opens somewhere above the fold and nothing appears to
     //have happened.
@@ -1012,19 +1020,33 @@ function openTo(p){
         block: "center"
     });
 
+    if (samePage) { showDetail(); return; }
+
     //let the scroll land before the cover starts swinging, so she actually sees it open
     const settle = reduced ? 0 : 420;
 
     setTimeout(() => {
-        book.classList.add("open");
+        if (!wasOpen) {
+            //book is shut, so both pages are hidden behind the cover. fill them in
+            //FIRST and then swing it open — what gets revealed is already the right
+            //page. doing it the other way round meant the old page was on screen
+            //during the whole 900ms of the cover opening, then flicked to the new
+            //one, which read as a glitch.
+            fillDetail(p);
+            book.classList.add("open");
+            return;
+        }
 
-        setTimeout(() => {
-            const leaf = $("leaf");
-            leaf.classList.remove("turn");
-            void leaf.offsetWidth;           //forces the browser to restart the animation
-            leaf.classList.add("turn");
-            setTimeout(() => fillDetail(p), 300);
-        }, wasOpen ? 0 : 900);
+        //already open and turning from one piece to another. here the swap really
+        //would be visible, so sweep the leaf across and change the content while
+        //it's behind it.
+        const leaf = $("leaf");
+        leaf.classList.remove("turn");
+        void leaf.offsetWidth;               //forces the browser to restart the animation
+        leaf.classList.add("turn");
+        //swap the content while the leaf is still face-on and covering the page.
+        //it hides itself at 90 degrees, so anything after ~200ms would be visible.
+        setTimeout(() => fillDetail(p), 150);
     }, settle);
 }
 
