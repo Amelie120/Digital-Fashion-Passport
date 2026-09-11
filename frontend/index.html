@@ -392,6 +392,7 @@ footer a{color:var(--hot)}
     <div class="spacer"></div>
     <a href="#about">How it works</a>
     <button class="btn ghost" id="connectBtn">Connect Wallet 👛</button>
+    <button class="btn ghost" id="disconnectBtn" hidden>Disconnect</button>
   </nav>
 
   <header class="hero">
@@ -656,6 +657,7 @@ async function connect(){
     $("status").textContent = "Connected: " + myAddress;
     $("connectBtn").textContent = short(myAddress) + " ✅";
     $("holder").textContent = short(myAddress);
+    $("disconnectBtn").hidden = false;
 
     //checking theyre actually on sepolia, otherwise every call fails confusingly.
     //rather than just telling them off, ask metamask to switch for them.
@@ -681,6 +683,52 @@ async function connect(){
 
     //now we know who they are we can load what they already own
     loadPassports();
+}
+
+// ── disconnecting, and following the wallet when it changes ──────────
+//a page can't really "log out" of MetaMask — the extension decides what it shares.
+//what we can do is forget everything on our side and ask MetaMask to revoke the
+//permission, which makes it prompt again next time.
+async function disconnect(){
+    try {
+        //supported in recent MetaMask. older versions just throw, which is fine —
+        //clearing our own state is what actually matters here.
+        await window.ethereum.request({
+            method: "wallet_revokePermissions",
+            params: [{ eth_accounts: {} }]
+        });
+    } catch (_) { /* not supported, carry on */ }
+
+    provider = signer = contract = null;
+    myAddress = null;
+    current = null;
+    myPassports = [];
+
+    $("connectBtn").textContent = "Connect Wallet 👛";
+    $("connectBtn").hidden = false;
+    $("disconnectBtn").hidden = true;
+    $("status").textContent = "Not connected";
+    $("holder").textContent = "not connected";
+    $("grid").innerHTML = "";
+    $("empty").textContent = "Connect your wallet to see what's already in here.";
+    $("empty").hidden = false;
+    book.classList.remove("open");
+    showEntry();
+}
+
+$("disconnectBtn").addEventListener("click", disconnect);
+
+if (window.ethereum) {
+    //switching account in MetaMask fires this. without it the page keeps showing
+    //the old address and the old collection, which looks broken.
+    window.ethereum.on("accountsChanged", accounts => {
+        if (!accounts.length) { disconnect(); return; }
+        connect();                      //rebuild signer/contract around the new account
+    });
+
+    //switching network rebuilds everything too, because the contract is bound to
+    //a provider that is now pointing at a different chain
+    window.ethereum.on("chainChanged", () => { if (myAddress) connect(); });
 }
 
 //closing the explainer
@@ -866,10 +914,19 @@ function unpack(p){
     return { brand:p[0], item:p[1], registrar:p[2], createdAt:p[3], uri:p[4] };
 }
 
+//two loads can easily overlap — switching account fires accountsChanged, which
+//reconnects, while a load started by the previous account is still waiting on the
+//chain. both would then append their cards to the same grid and you'd see every
+//item twice. so each run takes a ticket, and only the newest one is allowed to
+//draw anything.
+let loadSeq = 0;
+
 async function loadPassports(){
     if (!contract) return;
+    const seq = ++loadSeq;
     const grid = $("grid");
-    grid.innerHTML = "";
+    const who = myAddress;
+
     $("empty").textContent = "Loading…";
     $("empty").hidden = false;
 
@@ -885,8 +942,9 @@ async function loadPassports(){
         ids.map(async id => {
             try {
                 const owner = await contract.ownerOf(id);
-                //only show the ones this wallet currently owns
-                if (owner.toLowerCase() !== myAddress.toLowerCase()) return null;
+                //compare against the address this run started with, not the live
+                //one — it may have changed under us mid-flight
+                if (owner.toLowerCase() !== who.toLowerCase()) return null;
                 return { id, ...unpack(await contract.getPassport(id)) };
             } catch (_) {
                 //id doesnt exist or the token was burned. skip it.
@@ -895,11 +953,19 @@ async function loadPassports(){
         })
     );
 
+    //a newer load started while we were waiting on the chain, so these results are
+    //stale. drop them without touching the grid — the newer run will draw.
+    if (seq !== loadSeq) return;
+
     //drop the nulls, newest first
     const mine = results.filter(Boolean).reverse();
 
     //keep them so tapping a stamp can show the details without going back to the chain
     myPassports = mine;
+
+    //clear here rather than at the top, so a slow stale run can never wipe the
+    //grid a newer one has already filled
+    grid.innerHTML = "";
 
     for (const p of mine) {
         addVisa(p);
