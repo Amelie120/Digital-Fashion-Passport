@@ -1041,6 +1041,14 @@ function emojiOf(p){
     return loadCats()[String(p.id)] || emojiFor(p.brand, p.item);
 }
 
+//the proof field is optional. passports minted without one store the literal
+//string "no-proof", so translate that into something readable rather than
+//leaking an internal placeholder into the page.
+function proofLabel(uri){
+    const s = (uri || "").trim();
+    return (!s || s === "no-proof") ? "None linked" : s;
+}
+
 function when(createdAt){
     const d = createdAt ? new Date(Number(createdAt) * 1000) : new Date();
     return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}).toUpperCase();
@@ -1128,7 +1136,7 @@ function fillDetail(p){
     //gap is the provenance the whole project is about.
     $("dReg").textContent    = short(p.registrar) + (sameAddr(p.registrar, myAddress) ? " (you)" : "");
     $("dOwner").textContent  = short(myAddress) + " (you)";
-    $("dUri").textContent    = p.uri || "no-proof";
+    $("dUri").textContent    = proofLabel(p.uri);
 
     $("photo").textContent = emojiOf(p);
     $("mrz").innerHTML =
