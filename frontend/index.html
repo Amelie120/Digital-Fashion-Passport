@@ -268,6 +268,29 @@ footer a{color:var(--hot)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001s !important; transition-duration:.15s !important}
 }
+/* ── the "what is a wallet?" explainer ───────────── */
+.scrim{
+  position:fixed; inset:0; z-index:50; display:grid; place-items:center;
+  background:rgba(25,6,18,.72); padding:20px; backdrop-filter:blur(3px);
+}
+.scrim[hidden]{display:none}
+.modal{
+  background:var(--surface); color:var(--ink); border:2px solid var(--ink);
+  border-radius:16px; box-shadow:8px 8px 0 var(--hot);
+  max-width:440px; width:100%; padding:26px 24px; max-height:86vh; overflow-y:auto;
+}
+.modal h3{font-size:23px; margin-bottom:6px}
+.modal p{font-size:14px; color:var(--ink-soft); margin:0 0 14px}
+.modal ol{font-size:14px; padding-left:20px; margin:0 0 18px}
+.modal li{margin-bottom:9px}
+.modal li b{color:var(--ink)}
+.modal a{color:var(--hot); font-weight:700}
+.modal .row{display:flex; gap:10px; flex-wrap:wrap}
+.modal .note{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; line-height:1.6;
+  background:var(--ground); border:1px solid var(--line); border-radius:8px;
+  padding:10px 12px; margin-bottom:16px; color:var(--ink-soft);
+}
 </style>
 </head>
 
@@ -391,6 +414,36 @@ footer a{color:var(--hot)}
   </footer>
 </div>
 
+<!-- shown when the visitor has no wallet extension at all. most people opening
+     this link have never heard of MetaMask, so explain it instead of erroring -->
+<div class="scrim" id="noWallet" hidden>
+  <div class="modal">
+    <h3>You'll need a digital wallet 👛</h3>
+    <p>
+      This is a blockchain app, so there's no username or password. Your
+      <b>wallet</b> is your account — it holds your address and signs anything you save.
+    </p>
+
+    <ol>
+      <li>Install <a href="https://metamask.io/download/" target="_blank" rel="noopener">MetaMask</a>, a free browser extension. It takes about two minutes.</li>
+      <li>Create a wallet and <b>save your recovery phrase somewhere safe</b>. Never share it with anyone.</li>
+      <li>In MetaMask, turn on test networks and switch to <b>Sepolia</b>.</li>
+      <li>Grab some free test ETH from the <a href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noopener">Sepolia faucet</a> to cover transaction fees.</li>
+      <li>Come back here and hit Connect Wallet.</li>
+    </ol>
+
+    <div class="note">
+      Nothing here costs real money. Sepolia is Ethereum's test network and the
+      ETH on it has no value — it exists so people can try things safely.
+    </div>
+
+    <div class="row">
+      <a class="btn" href="https://metamask.io/download/" target="_blank" rel="noopener">Get MetaMask →</a>
+      <button class="btn ghost" id="closeNoWallet">Maybe later</button>
+    </div>
+  </div>
+</div>
+
 <script>
 //adding the sepolia address and the ABI
 const ADDRESS = "0x67ad5c6b250f08b1cfd749cc371cdd140d81a61f"
@@ -418,9 +471,42 @@ const SEPOLIA = 11155111n;
 const $ = id => document.getElementById(id);
 
 //connecting to MetaMask
+//asks metamask to switch the user over to sepolia so they dont have to dig
+//through the network menu themselves. 4902 means sepolia isnt in their list yet,
+//so we offer to add it.
+async function switchToSepolia(){
+    try {
+        await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0xaa36a7" }]   //11155111 in hex
+        });
+        return true;
+    } catch (e) {
+        if (e.code === 4902) {
+            try {
+                await window.ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [{
+                        chainId: "0xaa36a7",
+                        chainName: "Sepolia",
+                        nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
+                        rpcUrls: ["https://rpc.sepolia.org"],
+                        blockExplorerUrls: ["https://sepolia.etherscan.io"]
+                    }]
+                });
+                return true;
+            } catch (_) { return false; }
+        }
+        return false;
+    }
+}
+
 async function connect(){
+    //no wallet extension at all. most first time visitors land here, so explain
+    //what a wallet even is instead of showing them an error they cant act on.
     if (!window.ethereum) {
-        $("status").textContent = "MetaMask not found";
+        $("noWallet").hidden = false;
+        $("status").textContent = "No wallet detected — you'll need MetaMask";
         return;
     }
 
@@ -439,16 +525,38 @@ async function connect(){
     $("connectBtn").textContent = short(myAddress) + " ✅";
     $("holder").textContent = short(myAddress);
 
-    //checking theyre actually on sepolia, otherwise every call fails confusingly
-    const net = await provider.getNetwork();
+    //checking theyre actually on sepolia, otherwise every call fails confusingly.
+    //rather than just telling them off, ask metamask to switch for them.
+    let net = await provider.getNetwork();
     if (net.chainId !== SEPOLIA) {
-        $("status").textContent = "Wrong network — switch MetaMask to Sepolia";
-        return;
+        $("status").textContent = "Switching you to Sepolia…";
+        const ok = await switchToSepolia();
+        if (!ok) {
+            $("status").textContent = "Wrong network — please switch MetaMask to Sepolia";
+            return;
+        }
+        //the chain changed underneath us, so rebuild everything against the new one
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        contract = new ethers.Contract(ADDRESS, ABI, signer);
+        net = await provider.getNetwork();
+        if (net.chainId !== SEPOLIA) {
+            $("status").textContent = "Wrong network — please switch MetaMask to Sepolia";
+            return;
+        }
+        $("status").textContent = "Connected: " + myAddress;
     }
 
     //now we know who they are we can load what they already own
     loadPassports();
 }
+
+//closing the explainer
+$("closeNoWallet").addEventListener("click", () => { $("noWallet").hidden = true; });
+$("noWallet").addEventListener("click", e => {
+    //clicking the dark area outside the card closes it too
+    if (e.target.id === "noWallet") $("noWallet").hidden = true;
+});
 
 //turning 0x1234...abcd into something that fits on screen
 function short(a){ return a.slice(0,6) + "…" + a.slice(-4); }
