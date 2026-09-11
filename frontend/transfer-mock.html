@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transfer — design mock</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400&family=Karla:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#FFF4F8; --surface:#FFFFFF; --ink:#3D0A26; --ink-soft:#8A5C72;
+  --line:#F5D6E3; --hot:#FF2E88; --rose-deep:#B21354; --mint:#0E9C81;
+  --alarm:#C62828;
+  --cover:#A30F49; --cover-hi:#D4246F; --foil:#E9CE7B; --foil-deep:#B8933C;
+  --paper:#FFF9FB; --paper-line:#F0D9E4;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#190612; --surface:#26101E; --ink:#FFE9F3; --ink-soft:#C298AF;
+    --line:#4A1F38; --hot:#FF63A6; --rose-deep:#FF9CC6; --mint:#3FD3B4; --alarm:#FF7A7A;
+  }
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:Karla,"Helvetica Neue",Arial,sans-serif; font-size:16px; line-height:1.6;
+  overflow-x:hidden;
+}
+h1,h2,h3{font-family:"Bodoni Moda",Didot,Georgia,serif; font-weight:700; margin:0; text-wrap:balance}
+.wrap{max-width:1080px; margin:0 auto; padding:0 24px}
+.eyebrow{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--ink-soft);
+}
+.head{display:grid; gap:10px; justify-items:center; text-align:center; padding:34px 0 0}
+.head h1{font-size:clamp(30px,4.4vw,46px); line-height:1.06; max-width:16ch}
+.head h1 em{font-style:italic; color:var(--hot)}
+.head p{color:var(--ink-soft); max-width:44ch; margin:0}
+
+/* ── passport ────────────────────────────────────── */
+.stage{perspective:2200px; display:flex; justify-content:center; min-height:520px; padding:26px 0 8px}
+.book{
+  position:relative; width:320px; height:452px; transform-style:preserve-3d;
+  transition:transform .9s cubic-bezier(.22,1,.36,1);
+}
+.book.open{transform:translateX(160px)}
+@media (max-width:760px){ .book.open{transform:translateX(0) scale(.52)} }
+.face{position:absolute; inset:0; border-radius:6px 14px 14px 6px; backface-visibility:hidden; overflow:hidden}
+
+.cover-wrap{
+  position:absolute; inset:0; transform-style:preserve-3d; transform-origin:left center;
+  z-index:4; cursor:pointer; transition:transform 1.1s cubic-bezier(.62,.02,.2,1);
+}
+.book.open .cover-wrap{transform:rotateY(-176deg)}
+.cover{
+  background:
+    radial-gradient(120% 90% at 30% 0%, var(--cover-hi), transparent 60%),
+    linear-gradient(160deg,var(--cover),#78092F);
+  color:var(--foil); text-align:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:14px; padding:34px 26px; box-shadow:0 30px 50px rgba(122,9,47,.35);
+}
+.cover::after{
+  content:""; position:absolute; inset:14px; pointer-events:none;
+  border:1.5px solid rgba(233,206,123,.55); border-radius:4px 10px 10px 4px;
+}
+.crest{font-size:52px; animation:float 5s ease-in-out infinite}
+.cover h2{
+  font-size:27px; line-height:1.1;
+  background:linear-gradient(100deg,var(--foil-deep),#FFF0BE 45%,var(--foil-deep));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.chip{
+  width:44px; height:32px; border-radius:5px; margin-top:6px;
+  background:linear-gradient(135deg,var(--foil),#8C6C1F);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+}
+.tap{
+  position:absolute; bottom:26px; left:0; right:0; transition:opacity .3s;
+  font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.16em;
+  color:rgba(255,240,190,.9);
+}
+.book.open .tap{opacity:0}
+
+.page-left{
+  transform:rotateY(180deg); background:var(--paper); color:#3D0A26;
+  padding:22px 20px; display:flex; flex-direction:column; gap:14px;
+  box-shadow:inset 8px 0 18px rgba(122,9,47,.12);
+}
+.photo{
+  flex:1; border:1px solid var(--paper-line); border-radius:4px; overflow:hidden;
+  display:grid; place-items:center; font-size:96px;
+  background:repeating-linear-gradient(45deg,#FFF,#FFF 6px,#FDF0F5 6px,#FDF0F5 12px);
+}
+.mrz{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; line-height:1.5; color:#5A2340;
+  border-top:1px solid var(--paper-line); padding-top:10px; word-break:break-all;
+}
+
+.page-right{
+  z-index:1; background:var(--paper); color:#3D0A26; padding:24px 22px;
+  display:flex; flex-direction:column;
+  box-shadow:0 30px 50px rgba(122,9,47,.22), inset -8px 0 18px rgba(122,9,47,.08);
+}
+.page-right::before{
+  content:""; position:absolute; inset:0; opacity:.35; pointer-events:none;
+  background:
+    repeating-linear-gradient(75deg,rgba(255,46,136,.09) 0 1px,transparent 1px 9px),
+    repeating-linear-gradient(-75deg,rgba(255,46,136,.07) 0 1px,transparent 1px 9px);
+}
+.page-right > *{position:relative}
+.ph{
+  display:flex; align-items:baseline; justify-content:space-between;
+  border-bottom:1.5px solid var(--paper-line); padding-bottom:8px; margin-bottom:14px;
+}
+.ph .t{font-family:"Bodoni Moda",serif; font-size:15px; font-weight:700}
+.ph .n{font-family:"IBM Plex Mono",monospace; font-size:10px; color:#A8607F}
+
+/* the leaf that sweeps across when you turn to another item */
+.leaf{
+  position:absolute; inset:0; z-index:3; border-radius:6px 14px 14px 6px;
+  background:linear-gradient(90deg,#F6E2EB,var(--paper) 22%);
+  transform-origin:left center; transform:rotateY(0deg); opacity:0;
+  pointer-events:none; box-shadow:0 20px 40px rgba(122,9,47,.2);
+}
+.leaf.turn{animation:turnpage .78s cubic-bezier(.55,.05,.3,1) forwards}
+@keyframes turnpage{
+  0%{opacity:1; transform:rotateY(0deg)}
+  99%{opacity:1; transform:rotateY(-172deg)}
+  100%{opacity:0; transform:rotateY(-172deg)}
+}
+@keyframes float{50%{transform:translateY(-9px)}}
+
+/* read-only item details */
+.row{display:grid; gap:2px; margin-bottom:12px}
+.row .k{
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:#B0708C;
+}
+.row .v{font-size:15px; font-weight:500; word-break:break-all}
+.row .v.mono{font-family:"IBM Plex Mono",monospace; font-size:12px}
+
+.pagebtn{
+  width:100%; border:2px solid #3D0A26; font-family:Karla,sans-serif; font-weight:700;
+  font-size:14px; padding:11px; border-radius:999px; cursor:pointer;
+  box-shadow:3px 3px 0 #3D0A26; transition:transform .15s, box-shadow .15s;
+}
+.pagebtn:hover{transform:translate(-2px,-2px); box-shadow:5px 5px 0 #3D0A26}
+.pagebtn.go{background:#FF2E88; color:#fff; margin-top:auto}
+.pagebtn.danger{background:#C62828; color:#fff; margin-top:8px}
+.pagebtn.quiet{background:transparent; color:#3D0A26; box-shadow:none; border-width:1.5px; margin-top:8px}
+.pagebtn.quiet:hover{transform:none; box-shadow:none; background:#FDEDF3}
+.pagebtn[disabled]{opacity:.6; cursor:wait; transform:none}
+
+/* the transfer form, second half of the right page */
+.tf{display:none; flex-direction:column; flex:1}
+.tf.on{display:flex}
+.detail.off{display:none}
+.tf label{
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:#B0708C; display:block; margin-bottom:3px;
+}
+.tf input{
+  font-family:"IBM Plex Mono",monospace; font-size:12px; color:#3D0A26; width:100%;
+  border:0; border-bottom:1.5px dotted #E3B9CD; background:transparent; padding:5px 0;
+}
+.tf input:focus{outline:0; border-bottom-color:var(--hot)}
+.tf input::placeholder{color:#D9AFC3}
+.warn{
+  border-left:3px solid #C62828; background:#FDECEC; border-radius:0;
+  padding:9px 11px; margin:14px 0; font-size:12.5px; line-height:1.45; color:#7A1B1B;
+}
+.warn b{font-weight:700}
+.err{font-size:12px; color:#C62828; margin:8px 0 0; min-height:1px}
+
+/* confirm step: shows the address big before anything happens */
+.confirm{
+  position:absolute; inset:0; z-index:5; background:var(--paper);
+  display:none; flex-direction:column; padding:24px 22px; border-radius:6px 14px 14px 6px;
+}
+.confirm.on{display:flex}
+.confirm .to{
+  font-family:"IBM Plex Mono",monospace; font-size:13px; line-height:1.7; color:#3D0A26;
+  background:#FDECEC; border:1.5px solid #F3C4C4; border-radius:6px;
+  padding:12px; margin:12px 0; word-break:break-all;
+}
+.confirm .piece{font-family:"Bodoni Moda",serif; font-size:19px; font-weight:700; margin-top:4px}
+
+/* the transferred stamp */
+.stamp{
+  position:absolute; right:16px; bottom:86px; z-index:6;
+  border:3px solid var(--alarm); color:var(--alarm); border-radius:8px; padding:6px 10px;
+  font-family:"IBM Plex Mono",monospace; font-size:9px; letter-spacing:.12em; text-align:center;
+  transform:rotate(-14deg) scale(2.4); opacity:0; pointer-events:none;
+}
+.stamp.on{animation:thud .5s cubic-bezier(.3,1.6,.5,1) forwards}
+.stamp b{display:block; font-size:13px; letter-spacing:.06em}
+@keyframes thud{to{transform:rotate(-14deg) scale(1); opacity:.92}}
+
+/* ── the stamps you click ────────────────────────── */
+.collection{padding:44px 0 72px; display:grid; gap:18px}
+.chead{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap}
+.chead h2{font-size:clamp(22px,3.2vw,30px)}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:16px}
+.visa{
+  background:var(--surface); border:1.5px solid var(--line); border-radius:4px;
+  padding:16px; display:grid; gap:4px; position:relative; overflow:hidden;
+  cursor:pointer; text-align:left; color:inherit; font:inherit;
+  transition:transform .2s, border-color .2s;
+}
+.visa:hover{transform:translateY(-4px) rotate(-.6deg); border-color:var(--hot)}
+.visa:focus-visible{outline:3px solid var(--rose-deep); outline-offset:3px}
+.visa.active{border-color:var(--hot); border-width:2px}
+.visa.gone{opacity:.4}
+.visa .e{font-size:34px; line-height:1}
+.visa .brand{font-family:"Bodoni Moda",serif; font-size:17px; font-weight:700}
+.visa .item{font-size:14px; color:var(--ink-soft)}
+.visa .id{
+  font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--hot);
+  letter-spacing:.1em; margin-top:6px; font-variant-numeric:tabular-nums;
+}
+.visa.gone .id{color:var(--alarm)}
+.visa .ring{
+  position:absolute; right:-14px; bottom:-14px; width:74px; height:74px;
+  border-radius:50%; border:2px dashed var(--mint); opacity:.5;
+}
+.visa.gone .ring{border-color:var(--alarm)}
+.hint{color:var(--ink-soft); font-size:14px; margin:0}
+
+footer{
+  border-top:2px solid var(--line); padding:20px 0 40px;
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-soft);
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important; transition-duration:.15s !important}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <div class="eyebrow">Design mock · transfer flow</div>
+    <h1>Passing a piece <em>on.</em></h1>
+    <p>Tap any stamp below — the passport turns to that page. Nothing here touches the chain.</p>
+  </header>
+
+  <div class="stage">
+    <div class="book" id="book">
+
+      <div class="face page-right">
+        <div class="ph"><span class="t" id="pTitle">Entry</span><span class="n" id="pNum">TOKEN #—</span></div>
+
+        <!-- read only details -->
+        <div class="detail" id="detail">
+          <div class="row"><span class="k">Maison</span><span class="v" id="dBrand">—</span></div>
+          <div class="row"><span class="k">Item</span><span class="v" id="dItem">—</span></div>
+          <div class="row"><span class="k">Added</span><span class="v" id="dDate">—</span></div>
+          <div class="row"><span class="k">Holder</span><span class="v mono" id="dOwner">—</span></div>
+          <div class="row"><span class="k">Proof</span><span class="v mono" id="dUri">—</span></div>
+          <button class="pagebtn go" id="startBtn">Transfer this piece →</button>
+        </div>
+
+        <!-- the transfer form -->
+        <div class="tf" id="tf">
+          <label for="toAddr">Send to wallet address</label>
+          <input id="toAddr" placeholder="0x…" spellcheck="false">
+          <div class="warn">
+            <b>This cannot be undone.</b> Once sent, the passport belongs to that address. A wrong address loses the piece forever.
+          </div>
+          <p class="err" id="err"></p>
+          <button class="pagebtn danger" id="reviewBtn">Review transfer</button>
+          <button class="pagebtn quiet" id="backBtn">Cancel</button>
+        </div>
+
+        <div class="stamp" id="stamp"><b>TRANSFERRED</b><span id="stampTo">SEPOLIA</span></div>
+      </div>
+
+      <!-- confirm step, deliberately its own screen -->
+      <div class="confirm" id="confirm">
+        <div class="ph"><span class="t">Confirm</span><span class="n">FINAL</span></div>
+        <p style="margin:0; font-size:13px; color:#8A5C72">You are about to hand over</p>
+        <div class="piece" id="cPiece">—</div>
+        <p style="margin:14px 0 0; font-size:13px; color:#8A5C72">to this address</p>
+        <div class="to" id="cAddr">0x…</div>
+        <button class="pagebtn danger" id="confirmBtn" style="margin-top:auto">Yes, transfer it 🔑</button>
+        <button class="pagebtn quiet" id="cancelBtn">Go back</button>
+      </div>
+
+      <div class="leaf" id="leaf"></div>
+
+      <div class="cover-wrap" id="coverWrap">
+        <div class="face cover">
+          <div class="crest">👜</div>
+          <h2>Digital<br>Fashion<br>Passport</h2>
+          <div class="chip"></div>
+          <div class="tap">✦ TAP A STAMP BELOW ✦</div>
+        </div>
+        <div class="face page-left">
+          <div class="ph"><span class="t">Bearer</span><span class="n">DFP</span></div>
+          <div class="photo" id="photo">👜</div>
+          <div class="mrz" id="mrz">P&lt;DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;<br>0000000000DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="collection">
+    <div class="chead">
+      <h2>Stamps in this passport</h2>
+      <span class="eyebrow">Example entries</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <p class="hint">Each stamp is a page. Tap one and the passport turns to it.</p>
+  </section>
+
+  <footer>MOCK — NO WALLET, NO TRANSACTIONS</footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const items = [
+  {id:1, e:"👜", brand:"Gucci",  item:"Jackie 1961, small",   date:"14 FEB 2026", uri:"ipfs://bafyb…k3q", gone:false},
+  {id:2, e:"👟", brand:"sacai",  item:"LDWaffle, worn twice", date:"02 MAR 2026", uri:"no-proof",         gone:false},
+  {id:3, e:"💍", brand:"Cartier",item:"Trinity, inherited",   date:"28 APR 2026", uri:"ipfs://bafyb…7zt", gone:false}
+];
+
+let current = null;
+const pad = n => String(n).padStart(4,"0");
+
+/* build the stamp cards */
+function drawGrid(){
+  const grid = $("grid");
+  grid.innerHTML = "";
+  items.forEach(it => {
+    const b = document.createElement("button");
+    b.className = "visa" + (it.gone ? " gone" : "") + (current && current.id === it.id ? " active" : "");
+    b.innerHTML =
+      '<div class="e"></div><div class="brand"></div><div class="item"></div>' +
+      '<div class="id">#' + pad(it.id) + ' · ' + (it.gone ? "TRANSFERRED" : it.date) + '</div>' +
+      '<div class="ring"></div>';
+    b.querySelector(".e").textContent = it.e;
+    b.querySelector(".brand").textContent = it.brand;
+    b.querySelector(".item").textContent = it.item;
+    b.addEventListener("click", () => openTo(it));
+    grid.appendChild(b);
+  });
+}
+
+/* turning to a page: open the cover if shut, then sweep a leaf across */
+function openTo(it){
+  const wasOpen = $("book").classList.contains("open");
+  $("book").classList.add("open");
+  const delay = wasOpen ? 0 : 900;
+
+  setTimeout(() => {
+    const leaf = $("leaf");
+    leaf.classList.remove("turn");
+    void leaf.offsetWidth;          // forces the browser to restart the animation
+    leaf.classList.add("turn");
+    setTimeout(() => fill(it), 300); // swap the content while the leaf hides it
+  }, delay);
+}
+
+function fill(it){
+  current = it;
+  $("pTitle").textContent = it.brand;
+  $("pNum").textContent = "TOKEN #" + pad(it.id);
+  $("dBrand").textContent = it.brand;
+  $("dItem").textContent  = it.item;
+  $("dDate").textContent  = it.date;
+  $("dOwner").textContent = it.gone ? "0x9dE2…4a71" : "0x4Fa1…9c2B (you)";
+  $("dUri").textContent   = it.uri;
+  $("photo").textContent  = it.e;
+  $("mrz").innerHTML =
+    "P&lt;DFP" + it.brand.toUpperCase().padEnd(10,"<") + "&lt;&lt;" +
+    it.item.toUpperCase().replace(/[^A-Z0-9]/g,"<").slice(0,12) +
+    "<br>00000000" + pad(it.id) + "DFP&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;02";
+
+  $("stamp").classList.toggle("on", it.gone);
+  $("stampTo").textContent = it.gone ? "TO 0x9dE2…4a71" : "SEPOLIA";
+  $("startBtn").style.display = it.gone ? "none" : "";
+  showDetail();
+  drawGrid();
+}
+
+/* three screens on the right page: details, form, confirm */
+function showDetail(){
+  $("detail").classList.remove("off");
+  $("tf").classList.remove("on");
+  $("confirm").classList.remove("on");
+  $("err").textContent = "";
+}
+function showForm(){
+  $("detail").classList.add("off");
+  $("tf").classList.add("on");
+  $("confirm").classList.remove("on");
+  setTimeout(() => $("toAddr").focus(), 100);
+}
+
+$("startBtn").addEventListener("click", showForm);
+$("backBtn").addEventListener("click", showDetail);
+$("cancelBtn").addEventListener("click", showForm);
+
+/* checking the address before we let them anywhere near confirm */
+$("reviewBtn").addEventListener("click", () => {
+  const to = $("toAddr").value.trim();
+  if (!to) { $("err").textContent = "Enter the address you're sending to"; return; }
+  // REAL VERSION: use ethers.isAddress(to) — it checks the checksum too, not just the shape
+  if (!/^0x[a-fA-F0-9]{40}$/.test(to)) { $("err").textContent = "That's not a valid wallet address"; return; }
+  $("err").textContent = "";
+  $("cPiece").textContent = current.brand + " — " + current.item;
+  $("cAddr").textContent = to;
+  $("confirm").classList.add("on");
+});
+
+$("toAddr").addEventListener("input", () => $("err").textContent = "");
+
+$("confirmBtn").addEventListener("click", async () => {
+  const btn = $("confirmBtn");
+  btn.disabled = true;
+  btn.textContent = "Confirm in MetaMask 🦊";
+  // REAL VERSION: await contract.transferFrom(myAddress, to, tokenId) then await tx.wait()
+  await new Promise(r => setTimeout(r, 1100));
+  btn.textContent = "Sending… ⛓️";
+  await new Promise(r => setTimeout(r, 1400));
+
+  const to = $("toAddr").value.trim();
+  current.gone = true;
+  $("confirm").classList.remove("on");
+  $("stampTo").textContent = "TO " + to.slice(0,6) + "…" + to.slice(-4);
+  $("stamp").classList.add("on");
+  $("dOwner").textContent = to.slice(0,6) + "…" + to.slice(-4);
+  $("startBtn").style.display = "none";
+  showDetail();
+  drawGrid();
+
+  btn.disabled = false;
+  btn.textContent = "Yes, transfer it 🔑";
+  $("toAddr").value = "";
+
+  await new Promise(r => setTimeout(r, 1400));
+  $("book").classList.remove("open");
+});
+
+$("coverWrap").addEventListener("click", () => $("book").classList.toggle("open"));
+
+drawGrid();
+fill(items[0]);
+</script>
+</body>
+</html>
